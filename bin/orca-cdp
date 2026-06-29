@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+# orca-cdp — discover the Chrome DevTools Protocol (CDP) endpoint exposed by
+# Orca's embedded Chromium browser, on the fly.
+#
+# The port is ephemeral: Orca picks a fresh one each launch, so we scan every
+# TCP port the Orca process is LISTENing on and keep the first that answers the
+# CDP /json/version probe.
+#
+# Usage:
+#   orca-cdp              # print the base HTTP URL, e.g. http://127.0.0.1:65279
+#   orca-cdp --port       # print just the port number
+#   orca-cdp --ws         # print the webSocketDebuggerUrl
+#   orca-cdp --json       # print the full /json/version payload
+#   orca-cdp --list       # print /json/list (open page targets)
+#   orca-cdp --export     # print `export ORCA_CDP_URL=...` for `eval "$(orca-cdp --export)"`
+#   orca-cdp -q ...       # quiet: no diagnostics on stderr
+#
+# Exit codes: 0 found, 1 Orca not running, 2 running but no CDP endpoint.
+
+set -euo pipefail
+
+QUIET=0
+MODE="url"
+for arg in "$@"; do
+  case "$arg" in
+    --port)   MODE="port" ;;
+    --ws)     MODE="ws" ;;
+    --json)   MODE="json" ;;
+    --list)   MODE="list" ;;
+    --export) MODE="export" ;;
+    -q|--quiet) QUIET=1 ;;
+    -h|--help)
+      sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'
+      exit 0 ;;
+    *) echo "orca-cdp: unknown arg '$arg'" >&2; exit 64 ;;
+  esac
+done
+
+log() { [ "$QUIET" -eq 1 ] || echo "orca-cdp: $*" >&2; }
+
+# 1. Locate the Orca process (the Electron main process is named "Orca").
+PIDS="$(pgrep -x Orca 2>/dev/null || true)"
+[ -z "$PIDS" ] && PIDS="$(pgrep -if '/Orca' 2>/dev/null || true)"
+if [ -z "$PIDS" ]; then
+  log "Orca does not appear to be running (no matching process)."
+  exit 1
+fi
+
+# 2. Collect every TCP port any Orca process is LISTENing on.
+PORTS="$(
+  for pid in $PIDS; do
+    lsof -nP -iTCP -sTCP:LISTEN -a -p "$pid" 2>/dev/null
+  done | awk '/LISTEN/ { n=split($9,a,":"); print a[n] }' | sort -un
+)"
+if [ -z "$PORTS" ]; then
+  log "Orca is running but has no listening TCP ports."
+  exit 2
+fi
+
+# 3. Probe each port for a CDP endpoint (/json/version returns a Browser field).
+for port in $PORTS; do
+  payload="$(curl -fs --max-time 2 "http://127.0.0.1:$port/json/version" 2>/dev/null || true)"
+  if printf '%s' "$payload" | grep -q '"webSocketDebuggerUrl"'; then
+    log "found CDP on port $port"
+    case "$MODE" in
+      port)   echo "$port" ;;
+      url)    echo "http://127.0.0.1:$port" ;;
+      ws)     printf '%s\n' "$payload" | sed -n 's/.*"webSocketDebuggerUrl":"\([^"]*\)".*/\1/p' ;;
+      json)   printf '%s\n' "$payload" ;;
+      export) echo "export ORCA_CDP_URL=http://127.0.0.1:$port" ;;
+      list)   curl -fs --max-time 2 "http://127.0.0.1:$port/json/list" 2>/dev/null || true; echo ;;
+    esac
+    exit 0
+  fi
+done
+
+log "Orca is running but no port answered the CDP probe (ports tried: $(echo $PORTS | tr '\n' ' '))."
+exit 2
