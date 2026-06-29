@@ -23,8 +23,23 @@ Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Prot
 
 ## Install
 
+**From npm:**
+
 ```bash
-git clone <this-repo> orca-playwright-bridge
+npm install orca-playwright-bridge      # in your project
+# or for the orca-cdp CLI on your PATH:
+npm install -g orca-playwright-bridge
+```
+
+```js
+const { connectOrcaPlaywright } = require('orca-playwright-bridge');        // or '.../bridge'
+const { connectOrca }           = require('orca-playwright-bridge/connect'); // raw CDP
+```
+
+**From source (for the slash commands / install.sh):**
+
+```bash
+git clone https://github.com/sagarpalsapure/orca-playwright-bridge
 cd orca-playwright-bridge
 npm install            # pulls playwright-core, chrome-remote-interface, ws
 ```

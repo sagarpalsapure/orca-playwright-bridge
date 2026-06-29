@@ -14,7 +14,7 @@ This is the Playwright-only sibling of `/orca-test` — assume Playwright is the
 `~/.local/lib/orca-pw-bridge.js` runs a CDP bridge that lets Playwright drive the live Orca tab — full auto-waiting locators, `getByRole`/`getByText`, clicks, `fill`, `evaluate`, screenshots. Write **one Node script** for the whole flow:
 
 ```js
-const { connectOrcaPlaywright } = require('/Users/sagarpalsapure/.local/lib/orca-pw-bridge.js');
+const { connectOrcaPlaywright } = require(process.env.HOME + '/.local/lib/orca-pw-bridge.js');
 const { page, close } = await connectOrcaPlaywright();   // attaches to the live Orca tab
 try {
   await page.goto('<url>', { waitUntil: 'load' });       // omit to use the current page

@@ -13,7 +13,7 @@ Drive the browser tab open in my **Orca** app and test it. Target: **$ARGUMENTS*
 - `orca tab create --url "<url>" --json` → open a tab (spawns the CDP proxy). Use this if `orca-cdp` fails because no tab is open.
 - **Playwright driver (preferred)** — `~/.local/lib/orca-pw-bridge.js` runs a CDP bridge that makes Playwright drive the live Orca tab (auto-waiting locators, `getByRole`, clicks, screenshots). Use as a module:
   ```js
-  const { connectOrcaPlaywright } = require('/Users/sagarpalsapure/.local/lib/orca-pw-bridge.js');
+  const { connectOrcaPlaywright } = require(process.env.HOME + '/.local/lib/orca-pw-bridge.js');
   const { page, close } = await connectOrcaPlaywright();   // attaches to the live tab
   await page.goto('<url>', { waitUntil: 'load' });
   await page.getByRole('button', { name: 'Submit' }).click();

@@ -8,13 +8,33 @@
   },
   "main": "lib/orca-pw-bridge.js",
   "exports": {
+    ".": "./lib/orca-pw-bridge.js",
     "./bridge": "./lib/orca-pw-bridge.js",
     "./connect": "./lib/orca-connect.js"
   },
+  "files": [
+    "bin/",
+    "lib/",
+    "commands/",
+    "install.sh",
+    "README.md"
+  ],
   "scripts": {
     "smoke:cdp": "bin/orca-cdp",
     "smoke:pw": "node lib/orca-pw-bridge.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sagarpalsapure/orca-playwright-bridge.git"
+  },
+  "homepage": "https://github.com/sagarpalsapure/orca-playwright-bridge#readme",
+  "bugs": {
+    "url": "https://github.com/sagarpalsapure/orca-playwright-bridge/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "os": ["darwin", "linux"],
   "dependencies": {
     "chrome-remote-interface": "^0.33.3",
     "playwright-core": "^1.40.0",
