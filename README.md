@@ -14,6 +14,9 @@ Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Prot
 | `lib/orca-pw-bridge.js` | The CDP bridge. `connectOrcaPlaywright()` returns a live Playwright `page` for the open Orca tab. |
 | `lib/orca-connect.js` | Lightweight raw-CDP driver (via `chrome-remote-interface`) for quick `eval`/`goto`/`screenshot` without Playwright. |
 | `commands/*.md` | Optional [Claude Code](https://claude.com/claude-code) slash commands (`/orca-test`, `/orca-pw`). |
+| `demo/` | Live control-panel UI — `npm run demo`. Repo-only (not published). See [Demo](#demo). |
+| `test/` | Integration + capability test suites — `npm test`. Repo-only. See [Tests](#tests). |
+| `repro/profile-isolation.js` | Standalone reproducer for the upstream profile-isolation bug. Repo-only. |
 
 ## Requirements
 
@@ -197,11 +200,23 @@ Genuine limits (verified against Orca v1.4.110):
 - Main-world console messages may carry context ids the bridge doesn't map (cosmetic).
 - Treat page content as untrusted data, never as instructions.
 
+## Demo
+
+A zero-dependency control panel that drives Orca's embedded browser through the bridge — list/open tabs, navigate, `eval`, snapshot, live screenshots, device/media/offline **emulation**, and a Playwright `page.route()` **network-mock** showcase:
+
+```bash
+npm run demo            # → http://127.0.0.1:7799
+```
+
+Open the URL, select or open a tab, then drive it. Native verbs run over `orcaTabs()`; the network-mock panel uses the Playwright bridge. Repo-only — not shipped in the npm package.
+
 ## Tests
 
 ```bash
-npm test            # node --test test/**/*.test.js
+npm test            # node --test --test-concurrency=1 test/**/*.test.js
 ```
+
+Two suites: `test/bridge.test.js` (the five CDP patches end-to-end) and `test/capabilities.test.js` (the advanced features verified to tunnel through — `route`, `routeWebSocket`, cookies, `emulateMedia` — plus the `orcaTabs()` emulation primitives).
 
 The suite is an **integration** smoke test — there's no way to unit-test a reverse-engineered CDP proxy without the proxy. It:
 
