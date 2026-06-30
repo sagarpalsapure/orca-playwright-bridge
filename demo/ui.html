@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>orca-playwright-bridge · live demo</title>
+<style>
+  :root{
+    --ink:#0F1B24; --ground:#F5F8F9; --surface:#FFFFFF;
+    --accent:#0E7C86; --accent-soft:#E2F0F1; --border:#DCE4E7; --border-soft:#EAF0F1;
+    --muted:#5A6B73;
+    --ok:#1F8A4C; --ok-bg:#E7F4EC; --no:#B83227; --no-bg:#FAE7E4; --warn-bg:#F8EFDC; --warn:#9C6A12;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+  header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:16px clamp(16px,3vw,28px);
+    background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5}
+  header h1{font-family:var(--mono);font-size:16px;font-weight:600;margin:0;letter-spacing:-.01em}
+  header h1 b{color:var(--accent)}
+  .pill{font-family:var(--mono);font-size:12px;font-weight:600;border-radius:999px;padding:4px 11px}
+  .pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.no{background:var(--no-bg);color:var(--no)}
+  .spacer{flex:1}
+  button{font-family:var(--sans);font-size:14px;font-weight:500;border:1px solid var(--accent);background:var(--accent);
+    color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;transition:filter .12s}
+  button:hover{filter:brightness(1.08)} button:active{filter:brightness(.94)}
+  button.ghost{background:var(--surface);color:var(--accent)}
+  button.sm{padding:5px 10px;font-size:13px}
+  button:disabled{opacity:.45;cursor:not-allowed;filter:none}
+  input,select,textarea{font-family:var(--mono);font-size:13px;border:1px solid var(--border);border-radius:7px;
+    padding:7px 9px;background:var(--surface);color:var(--ink);width:100%}
+  textarea{resize:vertical;min-height:54px}
+  label{font-size:12px;font-family:var(--mono);letter-spacing:.04em;color:var(--muted);text-transform:uppercase;display:block;margin-bottom:5px}
+  main{display:grid;grid-template-columns:minmax(320px,420px) 1fr;gap:18px;padding:18px clamp(16px,3vw,28px);align-items:start}
+  @media (max-width:840px){main{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:16px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px}
+  .card h2{font-size:12px;font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+    margin:0 0 12px;display:flex;align-items:center;gap:8px}
+  .row{display:flex;gap:8px;align-items:flex-end}
+  .row > *{flex:1} .row > .keep{flex:0 0 auto}
+  .stack{display:flex;flex-direction:column;gap:11px}
+  .tabs{display:flex;flex-direction:column;gap:7px;max-height:240px;overflow:auto}
+  .tab{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:9px;padding:8px 11px;
+    cursor:pointer;background:var(--surface);transition:border-color .12s,background .12s}
+  .tab:hover{border-color:var(--accent)}
+  .tab.sel{border-color:var(--accent);background:var(--accent-soft)}
+  .tab .ttl{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tab .u{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tab .meta{flex:1;min-width:0}
+  .dot{width:8px;height:8px;border-radius:50%;background:#CBD6DA;flex:0 0 auto}
+  .dot.active{background:var(--ok)}
+  .hint{font-size:12.5px;color:var(--muted);margin:0}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{flex:0 0 auto}
+  /* output */
+  .out{position:sticky;top:78px}
+  #shot{width:100%;border:1px solid var(--border);border-radius:9px;display:none;background:#0b0f12}
+  #log{font-family:var(--mono);font-size:12.5px;background:#0F1B24;color:#CFE7E9;border-radius:9px;padding:13px 14px;
+    white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto;margin:0}
+  .badge{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px;border-radius:999px;letter-spacing:.04em}
+  .badge.pw{background:var(--accent-soft);color:#0a5a62} .badge.nat{background:var(--ok-bg);color:var(--ok)}
+  .empty{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <h1>orca<b>·</b>playwright<b>·</b>bridge <span style="color:var(--muted);font-weight:400">live demo</span></h1>
+  <span id="status" class="pill no">checking…</span>
+  <div class="spacer"></div>
+  <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">v1.0.3</span>
+  <button class="ghost sm" onclick="refresh()">Refresh</button>
+</header>
+
+<main>
+  <div class="col">
+    <div class="card">
+      <h2>Tabs <span class="badge nat">orcaTabs()</span></h2>
+      <div id="tabs" class="tabs"><p class="empty">No tabs — open one below.</p></div>
+      <div class="row" style="margin-top:12px">
+        <input id="openUrl" value="https://example.com" placeholder="https://…">
+        <button class="keep" onclick="openTab()">Open tab</button>
+      </div>
+      <p class="hint" id="target" style="margin-top:9px">Target: <em>none selected</em></p>
+    </div>
+
+    <div class="card">
+      <h2>Drive the target tab <span class="badge nat">orcaTabs()</span></h2>
+      <div class="stack">
+        <div class="row">
+          <div><label>Navigate</label><input id="gotoUrl" value="https://example.com" placeholder="URL"></div>
+          <button class="keep" onclick="act('goto',{url:val('gotoUrl')})">goto</button>
+        </div>
+        <div>
+          <label>Evaluate JS</label>
+          <textarea id="expr">({ title: document.title, w: innerWidth, ua: navigator.userAgent.slice(0,40), dark: matchMedia('(prefers-color-scheme: dark)').matches, online: navigator.onLine })</textarea>
+        </div>
+        <div class="seg">
+          <button class="sm" onclick="act('eval',{expr:val('expr')})">eval</button>
+          <button class="sm ghost" onclick="act('snapshot',{})">snapshot</button>
+          <button class="sm ghost" onclick="shoot()">screenshot</button>
+          <button class="sm ghost" onclick="act('get',{what:'title'})">get title</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Emulate <span class="badge nat">set device / media / offline</span></h2>
+      <div class="stack">
+        <div class="row">
+          <div><label>Device</label>
+            <select id="device">
+              <option value="">— pick —</option>
+              <option>iPhone 12</option><option>iPhone SE</option>
+              <option>Pixel 5</option><option>iPad Pro 11</option>
+            </select></div>
+          <button class="keep sm" onclick="act('emulate',{device:val('device')})">apply</button>
+        </div>
+        <div class="seg">
+          <button class="sm ghost" onclick="act('emulate',{colorScheme:'dark'})">dark mode</button>
+          <button class="sm ghost" onclick="act('emulate',{colorScheme:'light'})">light mode</button>
+          <button class="sm ghost" onclick="act('emulate',{offline:true})">offline on</button>
+          <button class="sm ghost" onclick="act('emulate',{offline:false})">offline off</button>
+        </div>
+        <p class="hint">After emulating, hit <b>eval</b> above to see UA / dark / online change. Apply on a tab you're not also driving with Playwright.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Network mock <span class="badge pw">Playwright page.route()</span></h2>
+      <div class="stack">
+        <div><label>Mock HTML for any request</label>
+          <textarea id="mockBody"><h1 style="font:700 42px sans-serif;color:#0E7C86">Mocked by the bridge ✓</h1></textarea></div>
+        <button onclick="runMock()">Open tab · intercept · screenshot</button>
+        <p class="hint">Opens a fresh tab, routes every request to your mock via the Playwright bridge, navigates to example.com, and captures the result — no real network.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col out">
+    <div class="card">
+      <h2>Output</h2>
+      <img id="shot" alt="screenshot">
+      <pre id="log" style="margin-top:12px">Ready. Select or open a tab, then drive it.</pre>
+    </div>
+  </div>
+</main>
+
+<script>
+let TARGET = null;
+const $ = (id) => document.getElementById(id);
+const val = (id) => $(id).value;
+
+function log(label, data, kind) {
+  const tag = kind ? `[${kind}] ` : '';
+  $('log').textContent = tag + label + '\n' + (typeof data === 'string' ? data : JSON.stringify(data, null, 2));
+}
+
+async function call(name, args) {
+  const r = await fetch('/api/' + name, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(args || {}) });
+  return r.json();
+}
+
+async function refresh() {
+  let s;
+  try { s = await (await fetch('/api/status', { method: 'POST' })).json(); }
+  catch (e) { $('status').className = 'pill no'; $('status').textContent = 'server down'; return; }
+  const st = s.result;
+  $('status').className = 'pill ' + (st.reachable ? 'ok' : 'no');
+  $('status').textContent = st.reachable ? `Orca ready · ${st.tabs.length} tab(s)` : 'Orca not reachable';
+  renderTabs(st.tabs);
+}
+
+function renderTabs(tabs) {
+  const box = $('tabs');
+  if (!tabs.length) { box.innerHTML = '<p class="empty">No tabs — open one below.</p>'; return; }
+  box.innerHTML = '';
+  for (const t of tabs) {
+    const id = t.pageId || t.browserPageId;
+    const el = document.createElement('div');
+    el.className = 'tab' + (id === TARGET ? ' sel' : '');
+    el.innerHTML = `<span class="dot ${t.active ? 'active' : ''}"></span>
+      <div class="meta"><div class="ttl">${esc(t.title || '(untitled)')}</div><div class="u">${esc(t.url || '')}</div></div>
+      <button class="sm ghost" onclick="event.stopPropagation();closeTab('${id}')">×</button>`;
+    el.onclick = () => { TARGET = id; $('target').innerHTML = 'Target: <b style="font-family:var(--mono)">' + id.slice(0, 8) + '…</b>'; renderTabs(tabs); };
+    box.appendChild(el);
+  }
+}
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function needTarget() { if (!TARGET) { log('Select a tab first.', '', 'hint'); return false; } return true; }
+
+async function act(name, args) {
+  if (!needTarget()) return;
+  $('shot').style.display = 'none';
+  const res = await call(name, Object.assign({ pageId: TARGET }, args));
+  log(name, res.ok ? res.result : ('ERROR: ' + res.error), res.ok ? 'ok' : 'fail');
+  if (name === 'goto' || name === 'emulate') setTimeout(refresh, 400);
+}
+
+async function shoot() {
+  if (!needTarget()) return;
+  const res = await call('screenshot', { pageId: TARGET });
+  if (res.ok && res.result && res.result.data) {
+    $('shot').src = 'data:image/' + (res.result.format || 'png') + ';base64,' + res.result.data;
+    $('shot').style.display = 'block';
+    log('screenshot', '(' + res.result.data.length + ' base64 chars)', 'ok');
+  } else log('screenshot', res.error || res, 'fail');
+}
+
+async function openTab() {
+  const res = await call('open', { url: val('openUrl') });
+  if (res.ok) { TARGET = res.result.pageId; log('open', res.result, 'ok'); }
+  else log('open', res.error, 'fail');
+  setTimeout(refresh, 700);
+}
+
+async function closeTab(id) {
+  await call('close', { pageId: id });
+  if (TARGET === id) TARGET = null;
+  setTimeout(refresh, 300);
+}
+
+async function runMock() {
+  log('mock', 'running through the Playwright bridge…', 'pw');
+  const res = await call('mock', { body: val('mockBody') });
+  if (res.ok) {
+    $('shot').src = 'data:image/png;base64,' + res.result.data;
+    $('shot').style.display = 'block';
+    log('mock', { title: res.result.title, servedFrom: res.result.servedFrom }, 'pw');
+  } else log('mock', res.error, 'fail');
+}
+
+refresh();
+setInterval(refresh, 8000);
+</script>
+</body>
+</html>

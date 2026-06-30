@@ -21,6 +21,7 @@
   ],
   "scripts": {
     "test": "node --test --test-concurrency=1 \"test/**/*.test.js\"",
+    "demo": "node demo/server.js",
     "smoke:cdp": "bin/orca-cdp",
     "smoke:pw": "node lib/orca-pw-bridge.js"
   },
