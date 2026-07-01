@@ -82,6 +82,17 @@ test('audits + capture: metrics(), axTree(), captureMHTML(), fullPageScreenshot(
   } finally { await o.close(); tab.close(); }
 });
 
+test('fullPageScreenshot() caps huge pages instead of returning empty', { skip: SKIP }, async () => {
+  // 20000px tall — beyond Chrome's 16384 limit, where captureScreenshot returns
+  // empty data unless the clip is capped.
+  const tab = await openRawTab('data:text/html,<title>tall</title><div style="height:20000px;background:linear-gradient(#fff,#000)"></div>');
+  const o = await connectOrca({ cdpUrl: tab.cdpUrl });
+  try {
+    const shot = await o.fullPageScreenshot(undefined, { format: 'jpeg' });
+    assert.ok(shot.length > 1000, 'should return a valid image, not 0 bytes');
+  } finally { await o.close(); tab.close(); }
+});
+
 test('storage() / clearStorage() round-trip', { skip: SKIP }, async () => {
   const tab = await openRawTab('data:text/html,<title>st</title>');
   const o = await connectOrca({ cdpUrl: tab.cdpUrl });
