@@ -2,6 +2,11 @@
 
 All notable changes to `orca-playwright-bridge`. Verified against the Orca release noted per entry.
 
+## [Unreleased]
+
+### Changed
+- **Commands simplified to a single `/orca`.** Removed `/orca-pw` and `/orca-test` in favor of one plain-language command — describe the task and it drives Orca's browser. The detailed playbook + traps now live only in the `orca-browser` skill (and README), so there's one obvious command instead of three.
+
 ## [1.0.7] — Orca v1.4.114
 
 ### Added

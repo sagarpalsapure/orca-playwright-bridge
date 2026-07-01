@@ -13,7 +13,7 @@ Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Prot
 | `bin/orca-cdp` | Bash CLI — discovers Orca's **ephemeral** CDP port (new each launch; the proxy only exists while a browser tab is open). |
 | `lib/orca-pw-bridge.js` | The CDP bridge. `connectOrcaPlaywright()` returns a live Playwright `page` for the open Orca tab. |
 | `lib/orca-connect.js` | Raw-CDP driver (via `chrome-remote-interface`). Beyond `eval`/`goto`/`screenshot`: console/network capture, device/timezone emulation, cookies, a11y tree, perf metrics, full-page & MHTML capture — reaching CDP the Playwright path can't. |
-| `commands/*.md` | [Claude Code](https://claude.com/claude-code) slash commands — **`/orca`** (simple: just describe the task), plus `/orca-pw` and `/orca-test` (detailed). |
+| `commands/orca.md` | The **`/orca`** [Claude Code](https://claude.com/claude-code) slash command — just describe the task and it drives Orca's browser. |
 | `skills/orca-browser/` | Auto-invoked Claude Code **skill** — teaches an agent the capability map + the verified traps. |
 | `.claude-plugin/plugin.json` | Claude Code **plugin** manifest bundling the skill + commands. |
 | `demo/` | Live control-panel UI — `npm run demo`. Repo-only (not published). See [Demo](#demo). |
@@ -35,7 +35,7 @@ Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Prot
 | --- | --- | --- |
 | **Script against Orca** (use the JS API) | `npm install orca-playwright-bridge` | `require('orca-playwright-bridge')` |
 | **Just the CLI** on your PATH | `npm install -g orca-playwright-bridge` | `orca-cdp` |
-| **Let Claude Code drive Orca** | `npm i orca-playwright-bridge` **+** `/plugin marketplace add sagarpalsapure/orca-playwright-bridge` then `/plugin install orca-playwright-bridge` | the `orca-browser` skill + `/orca-pw`, `/orca-test` |
+| **Let Claude Code drive Orca** | `npm i orca-playwright-bridge` **+** `/plugin marketplace add sagarpalsapure/orca-playwright-bridge` then `/plugin install orca-playwright-bridge` | the `orca-browser` skill + the `/orca` command |
 | **No npm** (from source) | `git clone … && npm install` | `./install.sh` (symlinks `orca-cdp` + libs into `~/.local`, installs the Claude commands) |
 
 > The Claude Code plugin ships the *skill + commands* (the knowledge); the bridge *code* it calls still has to be importable — so a Claude Code user needs both the plugin **and** the package (`npm i`, or `./install.sh`).
@@ -275,7 +275,7 @@ Open the URL, select or open a tab, then drive it. Native verbs run over `orcaTa
 
 ## Claude Code plugin / skill
 
-This repo is also a [Claude Code](https://claude.com/claude-code) plugin. It ships the **`orca-browser` skill**, which Claude invokes automatically when a task needs to drive a page inside the Orca app — it carries the capability map *and* the verified traps (click-then-fill, `page.reload()` closes the tab, popups → `waitForNewTab`, `page.route` → `blockRequests`, iframes read-only, …) so the agent uses the bridge correctly on the first try instead of discovering the sharp edges the hard way. It also bundles the `/orca-pw` and `/orca-test` slash commands.
+This repo is also a [Claude Code](https://claude.com/claude-code) plugin. It ships the **`orca-browser` skill**, which Claude invokes automatically when a task needs to drive a page inside the Orca app — it carries the capability map *and* the verified traps (click-then-fill, `page.reload()` closes the tab, popups → `waitForNewTab`, `page.route` → `blockRequests`, iframes read-only, …) so the agent uses the bridge correctly on the first try instead of discovering the sharp edges the hard way. It also bundles the `/orca` slash command.
 
 Add it via the plugin marketplace (from a Git checkout):
 
