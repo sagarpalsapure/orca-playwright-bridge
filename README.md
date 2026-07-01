@@ -13,7 +13,7 @@ Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Prot
 | `bin/orca-cdp` | Bash CLI — discovers Orca's **ephemeral** CDP port (new each launch; the proxy only exists while a browser tab is open). |
 | `lib/orca-pw-bridge.js` | The CDP bridge. `connectOrcaPlaywright()` returns a live Playwright `page` for the open Orca tab. |
 | `lib/orca-connect.js` | Raw-CDP driver (via `chrome-remote-interface`). Beyond `eval`/`goto`/`screenshot`: console/network capture, device/timezone emulation, cookies, a11y tree, perf metrics, full-page & MHTML capture — reaching CDP the Playwright path can't. |
-| `commands/*.md` | [Claude Code](https://claude.com/claude-code) slash commands (`/orca-test`, `/orca-pw`). |
+| `commands/*.md` | [Claude Code](https://claude.com/claude-code) slash commands — **`/orca`** (simple: just describe the task), plus `/orca-pw` and `/orca-test` (detailed). |
 | `skills/orca-browser/` | Auto-invoked Claude Code **skill** — teaches an agent the capability map + the verified traps. |
 | `.claude-plugin/plugin.json` | Claude Code **plugin** manifest bundling the skill + commands. |
 | `demo/` | Live control-panel UI — `npm run demo`. Repo-only (not published). See [Demo](#demo). |
