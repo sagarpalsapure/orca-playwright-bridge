@@ -15,12 +15,11 @@ All notable changes to `orca-playwright-bridge`. Verified against the Orca relea
 
 ### Fixed
 - `fullPageScreenshot()` returned 0 bytes on pages taller than Chrome's 16384px limit; the clip is now capped so ultra-tall pages capture the top 16384px.
+- **Child `<iframe>`s now surface to Playwright.** `swapFrameIds` didn't rewrite the parent-reference keys (`parentId` / `parentFrameId`), so child frames referenced the main frame by Orca's real id (which Playwright knows as the targetId) and were orphaned/dropped. Rewriting those keys means `page.frames()` includes iframes and `frameLocator()` reads work (incl. cross-origin). Interaction / `frame.evaluate()` inside iframes still don't work (no child main-world context).
 
 ### Documented (found via exhaustive live testing on Wikipedia + the-internet.herokuapp.com)
 - Playwright `page.route()` `continue()/abort()` hangs on real requests (`route.fulfill()` works) — use `blockRequests()`.
-- Child `<iframe>`s aren't exposed to Playwright (`page.frames()` = main only); same-origin workaround via `contentDocument` in a main-world `evaluate`.
 - Popups / `target=_blank` open as a separate Orca tab with no CDP endpoint (Playwright can't attach); use `waitForNewTab()`.
-- Investigated iframe support: Orca *does* emit the child frame tree + `frameAttached` + child execution contexts, so exposing iframes to Playwright is a feasible (if deep) bridge fix — not an Orca gap. Deferred to avoid destabilizing the core.
 - Stress-tested: 12 tabs + 4× concurrent `evalAll` + 3 concurrent bridges — no races, no port exhaustion.
 - Verified working live: login/auth, checkboxes/dropdown, file upload, hovers, key presses, dynamic DOM add/remove, dynamic control state, redirects, HTTP status via HAR, infinite scroll, HTML5 drag-and-drop, large DOM, range slider, Shadow DOM piercing, HTTP basic auth, concurrent multi-tab.
 

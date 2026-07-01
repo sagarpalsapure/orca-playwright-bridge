@@ -148,6 +148,15 @@ test('conn.reload() reloads without closing the tab (unlike page.reload())', { s
   } finally { await t.close(); }
 });
 
+test('child <iframe> is exposed to Playwright and readable via frameLocator', { skip: SKIP }, async () => {
+  const html = '<title>parent</title><iframe srcdoc="<h1 id=h>inside the iframe</h1>"></iframe>';
+  const t = await openOrcaTab('data:text/html,' + encodeURIComponent(html), { focus: false });
+  try {
+    assert.equal(t.page.frames().length, 2, 'main frame + iframe');
+    assert.equal(await t.page.frameLocator('iframe').locator('#h').innerText(), 'inside the iframe');
+  } finally { await t.close(); }
+});
+
 test('waitForNewTab() captures a page-spawned popup (native driver)', { skip: SKIP }, async () => {
   const main = await openOrcaTab('data:text/html,<title>opener</title><button id=go onclick="window.open(\'about:blank\')">go</button>');
   try {
