@@ -106,6 +106,8 @@ export interface TabDriver {
   mouseDown(): any;
   mouseUp(): any;
   mouseWheel(dy: number, dx?: number): any;
+  /** Bring this tab to the foreground (active + focused). */
+  activate(): any;
 }
 
 export interface OrcaTabs {
@@ -133,7 +135,7 @@ export interface ConnectPlaywrightOptions extends StartBridgeOptions {
 
 export function startBridge(opts?: StartBridgeOptions): Promise<Bridge>;
 export function connectOrcaPlaywright(opts?: ConnectPlaywrightOptions): Promise<OrcaPlaywright>;
-export function openOrcaTab(url: string, opts?: { profile?: string }): Promise<OrcaPlaywright>;
+export function openOrcaTab(url: string, opts?: { profile?: string; focus?: boolean }): Promise<OrcaPlaywright>;
 /**
  * Run an action that opens a new tab/window and return a driver for it.
  * Popups have no CDP endpoint (Playwright can't attach), so `tab` is the native

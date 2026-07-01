@@ -114,10 +114,12 @@ Playwright can't open tabs against Orca's proxy, so use `openOrcaTab` — it run
 
 ```js
 const { openOrcaTab } = require('orca-playwright-bridge');
-const t = await openOrcaTab('https://example.com');
+const t = await openOrcaTab('https://example.com');   // opened focused (foreground)
 await t.page.getByRole('heading').innerText();
 await t.close();   // closes the bridge AND the Orca tab
 ```
+
+The new tab is brought to the **foreground** by default so you can watch the run; pass `{ focus: false }` for background automation. Re-focus any tab later with `orcaTabs().byId(id).activate()`.
 
 ### 2c. Drive multiple tabs (Orca-native, not Playwright)
 
