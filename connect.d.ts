@@ -76,6 +76,10 @@ export interface OrcaCdp {
   recordNetwork(): Promise<NetworkRecorder>;
   throttle(preset?: ThrottlePreset): Promise<any>;
   offline(on?: boolean): Promise<any>;
+  /** Block requests matching any pattern via CDP Fetch (works for real requests, unlike Playwright route.continue/abort). */
+  blockRequests(
+    patterns: Array<string | RegExp | ((url: string) => boolean)> | string | RegExp | ((url: string) => boolean)
+  ): Promise<{ counts: { blocked: number; allowed: number }; stop(): Promise<void> }>;
 
   cookies(urls?: string | string[]): Promise<any[]>;
   setCookie(cookie: Record<string, unknown>): Promise<any>;

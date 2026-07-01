@@ -93,6 +93,17 @@ test('fullPageScreenshot() caps huge pages instead of returning empty', { skip: 
   } finally { await o.close(); tab.close(); }
 });
 
+test('blockRequests() intercepts real requests via CDP Fetch', { skip: SKIP }, async () => {
+  const tab = await openRawTab('data:text/html,<title>b</title>');
+  const o = await connectOrca({ cdpUrl: tab.cdpUrl });
+  try {
+    const b = await o.blockRequests([() => true]);          // block everything
+    await o.goto('https://example.com', { waitMs: 3000 }).catch(() => {});
+    assert.ok(b.counts.blocked >= 1, 'the navigation request should be blocked');
+    await b.stop();
+  } finally { await o.close(); tab.close(); }
+});
+
 test('storage() / clearStorage() round-trip', { skip: SKIP }, async () => {
   const tab = await openRawTab('data:text/html,<title>st</title>');
   const o = await connectOrca({ cdpUrl: tab.cdpUrl });
