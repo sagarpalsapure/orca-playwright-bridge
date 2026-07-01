@@ -2,6 +2,11 @@
 
 All notable changes to `orca-playwright-bridge`. Verified against the Orca release noted per entry.
 
+## [1.1.1]
+
+### Docs
+- Blunt install messaging: the README now states up front (and in the install table) that `npm i orca-playwright-bridge` is the **library only** — the full setup (CLI + `/orca` command) is `npx orca-playwright-bridge setup`. (npm's auto-generated "Install" box isn't editable, so the README, which npm renders below it, carries the correction.)
+
 ## [1.1.0] — Orca v1.4.114
 
 ### Added

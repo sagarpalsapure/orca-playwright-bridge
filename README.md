@@ -2,6 +2,8 @@
 
 Drive the **[Orca](https://github.com/stablyai/orca)** app's embedded Chromium browser with **Playwright** — or raw CDP — from any script.
 
+> **Heads up — `npm i orca-playwright-bridge` installs the *library only*** (for `require()` in your own code). It does **not** put the `orca-cdp` CLI on your PATH or install the `/orca` Claude Code command. For the **full setup**, run **`npx orca-playwright-bridge setup`** (see [Quickstart](#quickstart)).
+
 Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Protocol (CDP) proxy**. Playwright's `connectOverCDP` can't talk to it directly (it sees the page but zero usable contexts). This package bridges the gap.
 
 > ⚠️ **Unofficial / reverse-engineered.** Orca ships no public browser-automation API (verified through release **v1.4.114** — its `orca` CLI exposes a rich browser verb set, but no CDP/Playwright bridge). This works by reverse-engineering Orca's internal CDP proxy and Playwright's `connectOverCDP` handshake. An Orca **or** Playwright upgrade could change either side and require a tweak. The patches are small and commented in `lib/orca-pw-bridge.js` — and `npm test` exercises the whole stack against a live Orca so breakage is easy to catch (see [Tests](#tests)).
@@ -52,7 +54,7 @@ Prefer to read before you run? Inspect [`get.sh`](get.sh) first, or use one of t
 | You want to… | Install | Then |
 | --- | --- | --- |
 | **The whole thing, one command** (CLI + libs + `/orca`) | `npx orca-playwright-bridge setup` &nbsp;·&nbsp; or `curl -fsSL …/get.sh \| bash` | `/orca <task>` in Claude Code |
-| **Script against Orca** (use the JS API) | `npm install orca-playwright-bridge` | `require('orca-playwright-bridge')` |
+| **The library only** (import the JS API into your own code — *not* the full install) | `npm install orca-playwright-bridge` | `require('orca-playwright-bridge')` |
 | **Just the CLI** on your PATH | `npm install -g orca-playwright-bridge` | `orca-cdp` |
 | **Let Claude Code drive Orca** | `npm i orca-playwright-bridge` **+** `/plugin marketplace add sagarpalsapure/orca-playwright-bridge` then `/plugin install orca-playwright-bridge` | the `orca-browser` skill + the `/orca` command |
 | **No npm** (from source) | `git clone … && npm install` | `./install.sh` (symlinks `orca-cdp` + libs into `~/.local`, installs the Claude commands) |
