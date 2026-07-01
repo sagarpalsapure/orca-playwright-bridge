@@ -11,7 +11,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
 
-const { openOrcaTab, orcaTabs } = require('..');
+const { openOrcaTab, orcaTabs, waitForNewTab } = require('..');
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -146,4 +146,15 @@ test('conn.reload() reloads without closing the tab (unlike page.reload())', { s
     await t.reload();
     assert.equal(await t.page.title(), 'ReloadProbe'); // tab + bridge still alive
   } finally { await t.close(); }
+});
+
+test('waitForNewTab() captures a page-spawned popup (native driver)', { skip: SKIP }, async () => {
+  const main = await openOrcaTab('data:text/html,<title>opener</title><button id=go onclick="window.open(\'about:blank\')">go</button>');
+  try {
+    const popup = await waitForNewTab(() => main.page.click('#go'));
+    try {
+      assert.ok(popup.pageId, 'popup should expose a pageId');
+      assert.equal(popup.tab.eval('2 + 3'), 5);   // native driver drives the popup (no CDP endpoint for Playwright)
+    } finally { popup.close(); }
+  } finally { await main.close(); }
 });

@@ -196,6 +196,8 @@ await orca.axTree();                              // full accessibility tree
 await orca.domCounters();                         // DOM node / listener counts (leak checks)
 await orca.fullPageScreenshot('page.png');        // beyond the viewport
 await orca.captureMHTML('page.mhtml');            // single-file archive
+const rec = await orca.recordScreencast();        // { frames, save(dir), stop } — video/gif source
+// … drive the page …  await rec.stop();  rec.save('frames/');   // numbered images -> ffmpeg
 await orca.throttle('slow-3g');                   // or orca.offline()
 const blk = await orca.blockRequests(['.css', /analytics/, (u) => u.endsWith('.png')]);
 // … navigate …  blk.counts -> { blocked, allowed };  await blk.stop();
@@ -220,13 +222,13 @@ Orca's CDP proxy differs from real Chrome in five ways that each break Playwrigh
 
 What works:
 - **Multiple tabs, concurrently** — each tab has its own CDP endpoint, so a Playwright bridge per tab runs in parallel (`connectOrcaPlaywright({ tab })`).
-- **Open new tabs** — `openOrcaTab(url)` is the `newPage` equivalent: it runs `orca tab create`, attaches Playwright to the new tab, and its `close()` tears down both.
+- **Open new tabs** — `openOrcaTab(url)` is the `newPage` equivalent: it runs `orca tab create`, attaches Playwright to the new tab, and its `close()` tears down both. **`waitForNewTab(action)`** captures a *page-spawned* popup (which has no CDP endpoint) and returns a native `orcaTabs()` driver for it.
 - **`orcaTabs()`** — lightweight concurrent driver over Orca's native CLI (`orca … --page <id>`), no bridge needed.
 - **Advanced Playwright, verified through the bridge** — `page.route()` **mocking** (`route.fulfill`), `page.routeWebSocket()` WebSocket mocking, the `context.cookies()` / `addCookies()` API, and `page.emulateMedia()` all tunnel through (each has a regression test in `test/capabilities.test.js`).
 - **Request interception on real sites** — via the raw-CDP driver's `blockRequests(patterns)` (CDP `Fetch`). Use this to block/allow real requests; Playwright's `route.continue()`/`abort()` on real requests hangs through the bridge (see limits).
 - **Clean attach** — `connectOrcaPlaywright()` connects with `isLocal: true` (same-host filesystem speedups) and `noDefaults: true` (don't stamp Playwright's download/focus/media overrides onto Orca's live browser). Override via `connectOrcaPlaywright({ connectOptions: { … } })`.
 - **Emulation** — device, offline, media, extra headers, and HTTP-auth credentials, via `orcaTabs().setDevice()` / `setOffline()` / `setMedia()` / `setHeaders()` / `setCredentials()` (Orca's native `set` primitives).
-- **Raw-CDP power tools** — the proxy answers ~35 CDP domains on the page socket, so `connectOrca()` reaches what Playwright's blocked `newCDPSession` can't: `captureConsole()` (logs + JS errors), `recordNetwork()`, `throttle()`/`offline()`, `cookies()`/`setCookie()`, `emulate({ device, timezone, cpu })` (no reload), `axTree()`, `metrics()`, `fullPageScreenshot()`, `captureMHTML()`.
+- **Raw-CDP power tools** — the proxy answers ~35 CDP domains on the page socket, so `connectOrca()` reaches what Playwright's blocked `newCDPSession` can't: `captureConsole()` (logs + JS errors), `recordNetwork()`, `throttle()`/`offline()`, `cookies()`/`setCookie()`, `emulate({ device, timezone, cpu })` (no reload), `axTree()`, `metrics()`, `fullPageScreenshot()`, `captureMHTML()`, `recordScreencast()`, `blockRequests()`.
 
 Genuine limits (re-verified against Orca v1.4.114 — none fixed since 1.4.110):
 - **Playwright can't call `newPage`/`newContext` directly** — the proxy rejects `Target.createTarget`. Use `openOrcaTab()` instead. ([stablyai/orca#7034](https://github.com/stablyai/orca/issues/7034))
@@ -234,7 +236,7 @@ Genuine limits (re-verified against Orca v1.4.114 — none fixed since 1.4.110):
 - **No `context.newCDPSession()`** — the proxy rejects `Target.attachToBrowserTarget` (`Not allowed`), so raw CDP sessions over Playwright are out. Drive low-level emulation through the `orcaTabs().set*` helpers instead. ([stablyai/orca#7033](https://github.com/stablyai/orca/issues/7033))
 - **Playwright `page.route()` `continue()`/`abort()` hangs on real requests** — its Network↔Fetch correlation breaks across the bridge's session/frame rewriting. `route.fulfill()` (pure mock) works. For intercepting/blocking *real* requests, use the raw-CDP driver's `blockRequests()` — CDP `Fetch.continueRequest`/`failRequest` work fine directly. (Bridge-side, not an Orca gap.)
 - **Child `<iframe>`s aren't exposed to Playwright** — `page.frames()` returns only the main frame, so `frameLocator()` can't resolve iframe content (read/click time out). The bridge synthesizes only the main-frame context. **Workaround for same-origin iframes:** reach in from the main world — `page.evaluate(() => document.querySelector('iframe').contentDocument.body.innerText)` (read + write both work). Cross-origin iframes are out.
-- **Popups / `target=_blank` open as a separate Orca tab**, not a Playwright `popup` event (the proxy rejects `Target.createTarget`, [#7034](https://github.com/stablyai/orca/issues/7034)). Attach to the new tab by URL: `connectOrcaPlaywright({ tab: /new-window-url/ })`.
+- **Popups / `target=_blank` open as a separate Orca tab**, not a Playwright `popup` event (the proxy rejects `Target.createTarget`, [#7034](https://github.com/stablyai/orca/issues/7034)), and Orca exposes **no CDP endpoint** for page-spawned tabs — so Playwright can't attach to them at all. Use **`waitForNewTab(action)`** to capture the popup and drive it via the native `orcaTabs()` driver.
 - **No `page.pdf()`** — Orca's proxy doesn't expose `Page.printToPDF`. ([stablyai/orca#7032](https://github.com/stablyai/orca/issues/7032))
 - **Emulation can't be applied to a Playwright-attached tab** — `orca set …` reloads the tab to apply, which tears down the bridge. Apply emulation over the native path (`orcaTabs().set*`) on a tab you're not simultaneously driving with Playwright.
 - **`page.fill()` is a no-op unless the field already has focus.** Orca's proxy ignores programmatic `.focus()`, so Playwright's fill (focus → `Input.insertText`) inserts into nothing. **Click first:** `await page.click(sel); await page.fill(sel, value)` — or use `page.keyboard.type()` / `locator.pressSequentially()`, or the native `orcaTabs().fill(ref, value)`. Reads (`evaluate`, `inputValue`, `innerText`) and isolated-world DOM writes work fine — this is specifically about synthetic text insertion needing real input focus. ([stablyai/orca#7035](https://github.com/stablyai/orca/issues/7035))
