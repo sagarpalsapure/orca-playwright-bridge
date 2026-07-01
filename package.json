@@ -22,6 +22,7 @@
     "index.d.ts",
     "connect.d.ts",
     "install.sh",
+    "get.sh",
     "README.md",
     "CHANGELOG.md"
   ],

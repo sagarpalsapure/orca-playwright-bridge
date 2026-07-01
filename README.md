@@ -6,6 +6,22 @@ Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Prot
 
 > ⚠️ **Unofficial / reverse-engineered.** Orca ships no public browser-automation API (verified through release **v1.4.114** — its `orca` CLI exposes a rich browser verb set, but no CDP/Playwright bridge). This works by reverse-engineering Orca's internal CDP proxy and Playwright's `connectOverCDP` handshake. An Orca **or** Playwright upgrade could change either side and require a tweak. The patches are small and commented in `lib/orca-pw-bridge.js` — and `npm test` exercises the whole stack against a live Orca so breakage is easy to catch (see [Tests](#tests)).
 
+## Quickstart
+
+One command — no npm, no clone dance (macOS/Linux; needs `git` + Node ≥ 18, and the Orca app running):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sagarpalsapure/orca-playwright-bridge/main/get.sh | bash
+```
+
+It clones into `~/.orca-playwright-bridge`, symlinks the `orca-cdp` CLI + libs into `~/.local`, and installs the **`/orca`** Claude Code command. Then, in Claude Code:
+
+```
+/orca open example.com and screenshot it
+```
+
+Prefer to read before you run? Inspect [`get.sh`](get.sh) first, or use one of the [other install paths](#install). Re-run the command any time to update.
+
 ## What's inside
 
 | File | What it does |
@@ -33,6 +49,7 @@ Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Prot
 
 | You want to… | Install | Then |
 | --- | --- | --- |
+| **The whole thing, one command** (CLI + libs + `/orca`) | `curl -fsSL https://raw.githubusercontent.com/sagarpalsapure/orca-playwright-bridge/main/get.sh \| bash` | `/orca <task>` in Claude Code |
 | **Script against Orca** (use the JS API) | `npm install orca-playwright-bridge` | `require('orca-playwright-bridge')` |
 | **Just the CLI** on your PATH | `npm install -g orca-playwright-bridge` | `orca-cdp` |
 | **Let Claude Code drive Orca** | `npm i orca-playwright-bridge` **+** `/plugin marketplace add sagarpalsapure/orca-playwright-bridge` then `/plugin install orca-playwright-bridge` | the `orca-browser` skill + the `/orca` command |
