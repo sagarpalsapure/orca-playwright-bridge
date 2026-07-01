@@ -129,3 +129,13 @@ test('orcaTabs().mouseWheel() scrolls the page', { skip: SKIP }, async () => {
     assert.equal(d.eval('window.scrollY'), 500);
   } finally { tab.close(); }
 });
+
+test('orcaTabs().evalAll() evaluates across tabs (concurrent)', { skip: SKIP }, async () => {
+  const tab = await openNativeTab('data:text/html,<title>EvalAllProbe</title>');
+  try {
+    const results = await orcaTabs().evalAll('document.title');
+    assert.ok(Array.isArray(results) && results.every((r) => 'pageId' in r && 'value' in r));
+    const mine = results.find((r) => r.pageId === tab.pageId);
+    assert.ok(mine && mine.value === 'EvalAllProbe', 'our tab should appear with its title');
+  } finally { tab.close(); }
+});

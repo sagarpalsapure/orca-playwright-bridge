@@ -81,3 +81,30 @@ test('audits + capture: metrics(), axTree(), captureMHTML(), fullPageScreenshot(
     assert.ok(shot.length > 1000);
   } finally { await o.close(); tab.close(); }
 });
+
+test('storage() / clearStorage() round-trip', { skip: SKIP }, async () => {
+  const tab = await openRawTab('data:text/html,<title>st</title>');
+  const o = await connectOrca({ cdpUrl: tab.cdpUrl });
+  try {
+    await o.goto('https://example.com');   // real origin — data: URLs are opaque and have no localStorage
+    await o.evaluate("localStorage.setItem('k', 'v'); 1");
+    assert.equal((await o.storage('local')).k, 'v');
+    await o.clearStorage('local');
+    assert.deepEqual(await o.storage('local'), {});
+  } finally { await o.close(); tab.close(); }
+});
+
+test('recordNetwork() produces a valid HAR', { skip: SKIP }, async () => {
+  const tab = await openRawTab('data:text/html,<title>h</title>');
+  const o = await connectOrca({ cdpUrl: tab.cdpUrl });
+  try {
+    const net = await o.recordNetwork();
+    await o.goto('https://example.com');            // real request so the HAR has an entry
+    await sleep(1200);
+    const har = net.har();
+    assert.equal(har.log.version, '1.2');
+    assert.ok(har.log.entries.length > 0);
+    assert.ok(har.log.entries[0].request.url && typeof har.log.entries[0].time === 'number');
+    net.stop();
+  } finally { await o.close(); tab.close(); }
+});

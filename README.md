@@ -118,9 +118,9 @@ await t.page.getByRole('heading').innerText();
 await t.close();   // closes the bridge AND the Orca tab
 ```
 
-### 2c. Drive multiple tabs concurrently (Orca-native, not Playwright)
+### 2c. Drive multiple tabs (Orca-native, not Playwright)
 
-When you need several tabs at once, `orcaTabs()` wraps Orca's own CLI (`orca <cmd> --page <id>`), which *can* address every open tab in parallel:
+When you need to address several tabs, `orcaTabs()` wraps Orca's own CLI (`orca <cmd> --page <id>`) — it can drive any open tab by id:
 
 ```js
 const { orcaTabs } = require('orca-playwright-bridge');
@@ -137,7 +137,7 @@ t.fill('e5', 'query'); t.click('e6');        // interact by snapshot ref
 tabs.all().map(x => x.eval('location.href')); // every tab, no switching
 ```
 
-It mirrors Orca's full native browser surface, so it's lower-level than Playwright but genuinely concurrent:
+It mirrors Orca's full native browser surface. The per-verb methods are **synchronous** (each is a blocking `orca … --page` call), so `tabs.all().map(t => t.eval(…))` runs *serially*. For genuine wall-clock concurrency across tabs, use `tabs.evalAll(js)` (async, `Promise.all` — resolves to `[{ pageId, url, value }]`) or run a Playwright bridge per tab (those are truly concurrent):
 
 | Group | Methods |
 | --- | --- |
@@ -179,16 +179,20 @@ const orca = await connectOrca();
 
 // capture (events flow through the proxy)
 const console = orca.captureConsole();          // { messages, stop }
-const net = await orca.recordNetwork();          // { events, stop } — request/response/failed
+const net = await orca.recordNetwork();          // { events, har(), stop }
+// … drive the page …
+require('fs').writeFileSync('trace.har', JSON.stringify(net.har()));  // HAR 1.2
 
 // emulate — instant, no reload (unlike orcaTabs().setDevice)
 await orca.emulate({ device: 'iPhone 12', timezone: 'Asia/Tokyo', cpu: 4 });
 
-// cookies (the whole jar), audits, and capture
+// cookies (the whole jar), storage, audits, and capture
 await orca.cookies();                             // all cookies; or orca.cookies(url)
 await orca.setCookie({ name, value, url });
+await orca.storage('local');                      // localStorage as an object; clearStorage()
 await orca.metrics();                             // { Nodes, JSHeapUsedSize, … }
 await orca.axTree();                              // full accessibility tree
+await orca.domCounters();                         // DOM node / listener counts (leak checks)
 await orca.fullPageScreenshot('page.png');        // beyond the viewport
 await orca.captureMHTML('page.mhtml');            // single-file archive
 await orca.throttle('slow-3g');                   // or orca.offline()

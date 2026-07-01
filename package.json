@@ -7,15 +7,18 @@
     "orca-cdp": "bin/orca-cdp"
   },
   "main": "lib/orca-pw-bridge.js",
+  "types": "index.d.ts",
   "exports": {
-    ".": "./lib/orca-pw-bridge.js",
-    "./bridge": "./lib/orca-pw-bridge.js",
-    "./connect": "./lib/orca-connect.js"
+    ".": { "types": "./index.d.ts", "default": "./lib/orca-pw-bridge.js" },
+    "./bridge": { "types": "./index.d.ts", "default": "./lib/orca-pw-bridge.js" },
+    "./connect": { "types": "./connect.d.ts", "default": "./lib/orca-connect.js" }
   },
   "files": [
     "bin/",
     "lib/",
     "commands/",
+    "index.d.ts",
+    "connect.d.ts",
     "install.sh",
     "README.md"
   ],
