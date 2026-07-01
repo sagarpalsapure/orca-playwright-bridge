@@ -2,6 +2,20 @@
 
 All notable changes to `orca-playwright-bridge`. Verified against the Orca release noted per entry.
 
+## [Unreleased]
+
+### Added
+- `connectOrca().blockRequests(patterns)` — intercept/block real requests via CDP `Fetch` (strings, RegExps, or predicates). The working alternative to Playwright's `route.continue()/abort()`, which hangs through the bridge.
+
+### Fixed
+- `fullPageScreenshot()` returned 0 bytes on pages taller than Chrome's 16384px limit; the clip is now capped so ultra-tall pages capture the top 16384px.
+
+### Documented (found via exhaustive live testing on Wikipedia + the-internet.herokuapp.com)
+- Playwright `page.route()` `continue()/abort()` hangs on real requests (`route.fulfill()` works) — use `blockRequests()`.
+- Child `<iframe>`s aren't exposed to Playwright (`page.frames()` = main only); same-origin workaround via `contentDocument` in a main-world `evaluate`.
+- Popups / `target=_blank` open as a separate Orca tab (no Playwright `popup` event); attach by URL.
+- Verified working live: login/auth, checkboxes/dropdown, file upload, hovers, key presses, dynamic DOM add/remove, dynamic control state, redirects, HTTP status via HAR, infinite scroll, HTML5 drag-and-drop, large DOM, range slider, Shadow DOM piercing, HTTP basic auth, concurrent multi-tab.
+
 ## [1.0.6] — Orca v1.4.114
 
 ### Added
