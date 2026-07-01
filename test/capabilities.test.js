@@ -139,3 +139,11 @@ test('orcaTabs().evalAll() evaluates across tabs (concurrent)', { skip: SKIP }, 
     assert.ok(mine && mine.value === 'EvalAllProbe', 'our tab should appear with its title');
   } finally { tab.close(); }
 });
+
+test('conn.reload() reloads without closing the tab (unlike page.reload())', { skip: SKIP }, async () => {
+  const t = await openOrcaTab('data:text/html,<title>ReloadProbe</title>');
+  try {
+    await t.reload();
+    assert.equal(await t.page.title(), 'ReloadProbe'); // tab + bridge still alive
+  } finally { await t.close(); }
+});

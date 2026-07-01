@@ -15,6 +15,7 @@ Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Prot
 | `lib/orca-connect.js` | Raw-CDP driver (via `chrome-remote-interface`). Beyond `eval`/`goto`/`screenshot`: console/network capture, device/timezone emulation, cookies, a11y tree, perf metrics, full-page & MHTML capture — reaching CDP the Playwright path can't. |
 | `commands/*.md` | Optional [Claude Code](https://claude.com/claude-code) slash commands (`/orca-test`, `/orca-pw`). |
 | `demo/` | Live control-panel UI — `npm run demo`. Repo-only (not published). See [Demo](#demo). |
+| `examples/` | Runnable scripts: `multi-tab`, `login-form`, `device-screenshot`. Repo-only. |
 | `test/` | Integration + capability test suites — `npm test`. Repo-only. See [Tests](#tests). |
 | `repro/profile-isolation.js` | Standalone reproducer for the upstream profile-isolation bug. Repo-only. |
 
@@ -226,7 +227,7 @@ What works:
 
 Genuine limits (re-verified against Orca v1.4.114 — none fixed since 1.4.110):
 - **Playwright can't call `newPage`/`newContext` directly** — the proxy rejects `Target.createTarget`. Use `openOrcaTab()` instead. ([stablyai/orca#7034](https://github.com/stablyai/orca/issues/7034))
-- **No `page.reload()` through Playwright** — it closes the tab. Reload via `orcaTabs().reload()` (or `orca reload`), or re-`page.goto(url)`. ([stablyai/orca#7031](https://github.com/stablyai/orca/issues/7031))
+- **No `page.reload()` through Playwright** — it closes the tab. Use the connection's safe `reload()` (re-navigates the current URL), `orcaTabs().reload()`, or re-`page.goto(url)`. ([stablyai/orca#7031](https://github.com/stablyai/orca/issues/7031))
 - **No `context.newCDPSession()`** — the proxy rejects `Target.attachToBrowserTarget` (`Not allowed`), so raw CDP sessions over Playwright are out. Drive low-level emulation through the `orcaTabs().set*` helpers instead. ([stablyai/orca#7033](https://github.com/stablyai/orca/issues/7033))
 - **No `page.pdf()`** — Orca's proxy doesn't expose `Page.printToPDF`. ([stablyai/orca#7032](https://github.com/stablyai/orca/issues/7032))
 - **Emulation can't be applied to a Playwright-attached tab** — `orca set …` reloads the tab to apply, which tears down the bridge. Apply emulation over the native path (`orcaTabs().set*`) on a tab you're not simultaneously driving with Playwright.

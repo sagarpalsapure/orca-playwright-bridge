@@ -21,6 +21,8 @@ export interface OrcaPlaywright {
   bridge: Bridge;
   /** Present on openOrcaTab() results — the Orca browserPageId of the new tab. */
   browserPageId?: string;
+  /** Reload safely (re-navigates the current URL; page.reload() would close the tab). */
+  reload(opts?: { waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit' }): Promise<unknown>;
   /** Detach Playwright + stop the bridge (openOrcaTab also closes the tab). */
   close(): Promise<void>;
 }
