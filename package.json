@@ -42,7 +42,7 @@
   ],
   "dependencies": {
     "chrome-remote-interface": "^0.33.3",
-    "playwright-core": "^1.52.0",
+    "playwright-core": "^1.61.1",
     "ws": "^8.0.0"
   },
   "engines": {

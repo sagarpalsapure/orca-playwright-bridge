@@ -109,3 +109,23 @@ test('orcaTabs().setOffline() takes the tab offline', { skip: SKIP }, async () =
     assert.equal(d.eval('navigator.onLine'), true);
   } finally { tab.close(); }
 });
+
+// --- Orca 1.4.114 additions --------------------------------------------------
+
+test('orcaTabs().find() locates by role and clicks (semantic locator)', { skip: SKIP }, async () => {
+  const tab = await openNativeTab("data:text/html,<title>find</title><button onclick=\"document.title='CLICKED'\">Save</button>");
+  try {
+    const d = orcaTabs().byId(tab.pageId);
+    d.find('role', 'button', { action: 'click', text: 'Save' });
+    assert.equal(d.eval('document.title'), 'CLICKED');
+  } finally { tab.close(); }
+});
+
+test('orcaTabs().mouseWheel() scrolls the page', { skip: SKIP }, async () => {
+  const tab = await openNativeTab('data:text/html,<title>wheel</title><div style="height:3000px"></div>');
+  try {
+    const d = orcaTabs().byId(tab.pageId);
+    d.mouseWheel(500);
+    assert.equal(d.eval('window.scrollY'), 500);
+  } finally { tab.close(); }
+});
