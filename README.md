@@ -29,6 +29,19 @@ Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Prot
 
 ## Install
 
+**Pick your path** (all require the Orca app running + Node ≥ 18):
+
+| You want to… | Install | Then |
+| --- | --- | --- |
+| **Script against Orca** (use the JS API) | `npm install orca-playwright-bridge` | `require('orca-playwright-bridge')` |
+| **Just the CLI** on your PATH | `npm install -g orca-playwright-bridge` | `orca-cdp` |
+| **Let Claude Code drive Orca** | `npm i orca-playwright-bridge` **+** `/plugin marketplace add sagarpalsapure/orca-playwright-bridge` then `/plugin install orca-playwright-bridge` | the `orca-browser` skill + `/orca-pw`, `/orca-test` |
+| **No npm** (from source) | `git clone … && npm install` | `./install.sh` (symlinks `orca-cdp` + libs into `~/.local`, installs the Claude commands) |
+
+> The Claude Code plugin ships the *skill + commands* (the knowledge); the bridge *code* it calls still has to be importable — so a Claude Code user needs both the plugin **and** the package (`npm i`, or `./install.sh`).
+
+<details><summary>Details</summary>
+
 **From npm:**
 
 ```bash
@@ -55,6 +68,8 @@ Optional — put `orca-cdp` on your PATH and the libs in `~/.local/lib`:
 ```bash
 ./install.sh           # symlinks bin + lib into ~/.local, installs Claude commands
 ```
+
+</details>
 
 ## Usage
 
