@@ -12,7 +12,7 @@ Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Prot
 | --- | --- |
 | `bin/orca-cdp` | Bash CLI — discovers Orca's **ephemeral** CDP port (new each launch; the proxy only exists while a browser tab is open). |
 | `lib/orca-pw-bridge.js` | The CDP bridge. `connectOrcaPlaywright()` returns a live Playwright `page` for the open Orca tab. |
-| `lib/orca-connect.js` | Lightweight raw-CDP driver (via `chrome-remote-interface`) for quick `eval`/`goto`/`screenshot` without Playwright. |
+| `lib/orca-connect.js` | Raw-CDP driver (via `chrome-remote-interface`). Beyond `eval`/`goto`/`screenshot`: console/network capture, device/timezone emulation, cookies, a11y tree, perf metrics, full-page & MHTML capture — reaching CDP the Playwright path can't. |
 | `commands/*.md` | Optional [Claude Code](https://claude.com/claude-code) slash commands (`/orca-test`, `/orca-pw`). |
 | `demo/` | Live control-panel UI — `npm run demo`. Repo-only (not published). See [Demo](#demo). |
 | `test/` | Integration + capability test suites — `npm test`. Repo-only. See [Tests](#tests). |
@@ -169,13 +169,35 @@ t.setCredentials('user', 'pass');               // HTTP basic auth
 
 > Apply emulation on a tab you're **not** also driving with Playwright — `orca set …` reloads the tab to apply, which drops a Playwright bridge. Drive emulated tabs via `orcaTabs()` (native), or emulate first and attach Playwright after.
 
-### 3. Raw CDP (no Playwright)
+### 3. Raw CDP (no Playwright) — the most capable path
 
-```bash
-node lib/orca-connect.js --eval "document.title"
-node lib/orca-connect.js --goto https://example.com
-node lib/orca-connect.js --shot /tmp/tab.png
+Orca's proxy advertises ~35 CDP domains, and the **page socket answers almost all of them** — including things Playwright's blocked `newCDPSession` can't reach (device metrics, timezone, cookies, a11y, perf). `connectOrca()` wraps the high-value ones:
+
+```js
+const { connectOrca } = require('orca-playwright-bridge/connect');
+const orca = await connectOrca();
+
+// capture (events flow through the proxy)
+const console = orca.captureConsole();          // { messages, stop }
+const net = await orca.recordNetwork();          // { events, stop } — request/response/failed
+
+// emulate — instant, no reload (unlike orcaTabs().setDevice)
+await orca.emulate({ device: 'iPhone 12', timezone: 'Asia/Tokyo', cpu: 4 });
+
+// cookies (the whole jar), audits, and capture
+await orca.cookies();                             // all cookies; or orca.cookies(url)
+await orca.setCookie({ name, value, url });
+await orca.metrics();                             // { Nodes, JSHeapUsedSize, … }
+await orca.axTree();                              // full accessibility tree
+await orca.fullPageScreenshot('page.png');        // beyond the viewport
+await orca.captureMHTML('page.mhtml');            // single-file archive
+await orca.throttle('slow-3g');                   // or orca.offline()
+
+await orca.close();
+// anything else is one call: await orca.client.send('Domain.method', params)
 ```
+
+CLI: `node lib/orca-connect.js --eval "document.title" | --goto <url> | --shot /tmp/tab.png`
 
 ## How the bridge works (the 5 gaps it patches)
 
@@ -196,6 +218,7 @@ What works:
 - **Advanced Playwright, verified through the bridge** — `page.route()` request interception / mocking, `page.routeWebSocket()` WebSocket mocking, the `context.cookies()` / `addCookies()` API, and `page.emulateMedia()` all tunnel through (each has a regression test in `test/capabilities.test.js`).
 - **Clean attach** — `connectOrcaPlaywright()` connects with `isLocal: true` (same-host filesystem speedups) and `noDefaults: true` (don't stamp Playwright's download/focus/media overrides onto Orca's live browser). Override via `connectOrcaPlaywright({ connectOptions: { … } })`.
 - **Emulation** — device, offline, media, extra headers, and HTTP-auth credentials, via `orcaTabs().setDevice()` / `setOffline()` / `setMedia()` / `setHeaders()` / `setCredentials()` (Orca's native `set` primitives).
+- **Raw-CDP power tools** — the proxy answers ~35 CDP domains on the page socket, so `connectOrca()` reaches what Playwright's blocked `newCDPSession` can't: `captureConsole()` (logs + JS errors), `recordNetwork()`, `throttle()`/`offline()`, `cookies()`/`setCookie()`, `emulate({ device, timezone, cpu })` (no reload), `axTree()`, `metrics()`, `fullPageScreenshot()`, `captureMHTML()`.
 
 Genuine limits (re-verified against Orca v1.4.114 — none fixed since 1.4.110):
 - **Playwright can't call `newPage`/`newContext` directly** — the proxy rejects `Target.createTarget`. Use `openOrcaTab()` instead. ([stablyai/orca#7034](https://github.com/stablyai/orca/issues/7034))
