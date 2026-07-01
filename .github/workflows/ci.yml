@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+
+      - name: Modules load
+        run: node -e "require('.'); require('./lib/orca-connect.js'); console.log('modules load ok')"
+
+      # The integration suite skips cleanly (exit 0) when Orca isn't reachable —
+      # which it never is in CI — so this guards the non-Orca code paths
+      # (module load, exports, arg-building) on every push without needing the app.
+      - name: Tests (auto-skip without Orca)
+        run: npm test
+
+  types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Type-check the .d.ts against a consumer
+        run: |
+          cat > tc.ts <<'EOF'
+          import { orcaTabs, connectOrcaPlaywright } from './index';
+          import { connectOrca } from './connect';
+          async function m() {
+            const r: Array<{ pageId: string; value: any }> = await orcaTabs().evalAll('1');
+            const { page } = await connectOrcaPlaywright({ tab: /x/ });
+            await page?.title();
+            const o = await connectOrca();
+            const s: Record<string, string> = await o.storage('local');
+            void [r, s];
+          }
+          void m;
+          EOF
+          npx --yes -p typescript@5 tsc --noEmit --strict --moduleResolution node --module commonjs --esModuleInterop --skipLibCheck tc.ts
