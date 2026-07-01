@@ -11,10 +11,12 @@ Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Prot
 One command — no npm, no clone dance (macOS/Linux; needs `git` + Node ≥ 18, and the Orca app running):
 
 ```bash
+npx orca-playwright-bridge setup
+# …or, no npm at all:
 curl -fsSL https://raw.githubusercontent.com/sagarpalsapure/orca-playwright-bridge/main/get.sh | bash
 ```
 
-It clones into `~/.orca-playwright-bridge`, symlinks the `orca-cdp` CLI + libs into `~/.local`, and installs the **`/orca`** Claude Code command. Then, in Claude Code:
+Either installs the package (with its deps) into `~/.orca-playwright-bridge`, symlinks the `orca-cdp` CLI + libs into `~/.local`, and installs the **`/orca`** Claude Code command. (`npx … setup` pulls from npm; `get.sh` clones from GitHub — pick whichever you have.) Then, in Claude Code:
 
 ```
 /orca open example.com and screenshot it
@@ -49,7 +51,7 @@ Prefer to read before you run? Inspect [`get.sh`](get.sh) first, or use one of t
 
 | You want to… | Install | Then |
 | --- | --- | --- |
-| **The whole thing, one command** (CLI + libs + `/orca`) | `curl -fsSL https://raw.githubusercontent.com/sagarpalsapure/orca-playwright-bridge/main/get.sh \| bash` | `/orca <task>` in Claude Code |
+| **The whole thing, one command** (CLI + libs + `/orca`) | `npx orca-playwright-bridge setup` &nbsp;·&nbsp; or `curl -fsSL …/get.sh \| bash` | `/orca <task>` in Claude Code |
 | **Script against Orca** (use the JS API) | `npm install orca-playwright-bridge` | `require('orca-playwright-bridge')` |
 | **Just the CLI** on your PATH | `npm install -g orca-playwright-bridge` | `orca-cdp` |
 | **Let Claude Code drive Orca** | `npm i orca-playwright-bridge` **+** `/plugin marketplace add sagarpalsapure/orca-playwright-bridge` then `/plugin install orca-playwright-bridge` | the `orca-browser` skill + the `/orca` command |

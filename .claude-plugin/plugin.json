@@ -1,10 +1,18 @@
 {
   "name": "orca-playwright-bridge",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "description": "Drive Orca's embedded browser with Playwright or raw CDP. Bundles the orca-browser skill (auto-invoked) plus the /orca slash command.",
-  "author": { "name": "Sagar Palsapure" },
+  "author": {
+    "name": "Sagar Palsapure"
+  },
   "homepage": "https://github.com/sagarpalsapure/orca-playwright-bridge",
   "repository": "https://github.com/sagarpalsapure/orca-playwright-bridge",
   "license": "MIT",
-  "keywords": ["orca", "playwright", "cdp", "browser-automation", "chrome-devtools-protocol"]
+  "keywords": [
+    "orca",
+    "playwright",
+    "cdp",
+    "browser-automation",
+    "chrome-devtools-protocol"
+  ]
 }

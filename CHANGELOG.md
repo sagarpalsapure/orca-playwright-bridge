@@ -2,10 +2,14 @@
 
 All notable changes to `orca-playwright-bridge`. Verified against the Orca release noted per entry.
 
-## [Unreleased]
+## [1.1.0] — Orca v1.4.114
+
+### Added
+- **One-command install:** `npx orca-playwright-bridge setup` — installs the package (with deps) into `~/.orca-playwright-bridge`, symlinks the `orca-cdp` CLI + libs into `~/.local`, and installs the `/orca` command. (`get.sh` does the same from GitHub, no npm.)
+- `get.sh` — `curl … | bash` bootstrap for the npm-free path.
 
 ### Changed
-- **Commands simplified to a single `/orca`.** Removed `/orca-pw` and `/orca-test` in favor of one plain-language command — describe the task and it drives Orca's browser. The detailed playbook + traps now live only in the `orca-browser` skill (and README), so there's one obvious command instead of three.
+- **Commands simplified to a single `/orca`.** Removed `/orca-pw` and `/orca-test` in favor of one plain-language command; the detailed playbook + traps live in the `orca-browser` skill and README.
 
 ## [1.0.7] — Orca v1.4.114
 
