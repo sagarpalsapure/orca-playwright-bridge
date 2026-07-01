@@ -13,7 +13,9 @@ Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Prot
 | `bin/orca-cdp` | Bash CLI — discovers Orca's **ephemeral** CDP port (new each launch; the proxy only exists while a browser tab is open). |
 | `lib/orca-pw-bridge.js` | The CDP bridge. `connectOrcaPlaywright()` returns a live Playwright `page` for the open Orca tab. |
 | `lib/orca-connect.js` | Raw-CDP driver (via `chrome-remote-interface`). Beyond `eval`/`goto`/`screenshot`: console/network capture, device/timezone emulation, cookies, a11y tree, perf metrics, full-page & MHTML capture — reaching CDP the Playwright path can't. |
-| `commands/*.md` | Optional [Claude Code](https://claude.com/claude-code) slash commands (`/orca-test`, `/orca-pw`). |
+| `commands/*.md` | [Claude Code](https://claude.com/claude-code) slash commands (`/orca-test`, `/orca-pw`). |
+| `skills/orca-browser/` | Auto-invoked Claude Code **skill** — teaches an agent the capability map + the verified traps. |
+| `.claude-plugin/plugin.json` | Claude Code **plugin** manifest bundling the skill + commands. |
 | `demo/` | Live control-panel UI — `npm run demo`. Repo-only (not published). See [Demo](#demo). |
 | `examples/` | Runnable scripts: `multi-tab`, `login-form`, `device-screenshot`. Repo-only. |
 | `test/` | Integration + capability test suites — `npm test`. Repo-only. See [Tests](#tests). |
@@ -255,6 +257,19 @@ npm run demo            # → http://127.0.0.1:7799
 ```
 
 Open the URL, select or open a tab, then drive it. Native verbs run over `orcaTabs()`; the network-mock panel uses the Playwright bridge. Repo-only — not shipped in the npm package.
+
+## Claude Code plugin / skill
+
+This repo is also a [Claude Code](https://claude.com/claude-code) plugin. It ships the **`orca-browser` skill**, which Claude invokes automatically when a task needs to drive a page inside the Orca app — it carries the capability map *and* the verified traps (click-then-fill, `page.reload()` closes the tab, popups → `waitForNewTab`, `page.route` → `blockRequests`, iframes read-only, …) so the agent uses the bridge correctly on the first try instead of discovering the sharp edges the hard way. It also bundles the `/orca-pw` and `/orca-test` slash commands.
+
+Add it via the plugin marketplace (from a Git checkout):
+
+```
+/plugin marketplace add sagarpalsapure/orca-playwright-bridge
+/plugin install orca-playwright-bridge
+```
+
+The skill assumes `orca-playwright-bridge` is importable — `npm i orca-playwright-bridge` in your project, or `./install.sh` for the `~/.local` layout.
 
 ## Tests
 

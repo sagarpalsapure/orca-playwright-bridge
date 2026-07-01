@@ -2,13 +2,14 @@
 
 All notable changes to `orca-playwright-bridge`. Verified against the Orca release noted per entry.
 
-## [Unreleased]
+## [1.0.7] — Orca v1.4.114
 
 ### Added
+- **Claude Code plugin** — `.claude-plugin/plugin.json` bundling the auto-invoked **`orca-browser` skill** (`skills/orca-browser/SKILL.md`) plus the upgraded `/orca-pw` and `/orca-test` commands. The skill teaches an agent the capability map *and* the verified traps (click-then-fill, reload-closes-tab, popups→`waitForNewTab`, `route`→`blockRequests`, iframes read-only, etc.) so it uses the bridge correctly without trial and error.
+- `waitForNewTab(action)` — capture a page-spawned popup / `target=_blank` tab and drive it via the native `orcaTabs()` driver (page-spawned tabs have no CDP endpoint).
+- `orcaTabs().byId(id).activate()` — bring a tab to the foreground.
 - `connectOrca().blockRequests(patterns)` — intercept/block real requests via CDP `Fetch` (strings, RegExps, or predicates). The working alternative to Playwright's `route.continue()/abort()`, which hangs through the bridge.
 - `connectOrca().recordScreencast(opts)` — record the page as a stream of frames (`Page.startScreencast`); `save(dir)` writes numbered images to assemble into a GIF/MP4.
-- `waitForNewTab(action)` — run an action that opens a popup / `target=_blank` tab and drive it via the native `orcaTabs()` driver (page-spawned tabs have no CDP endpoint, so Playwright can't attach).
-- `orcaTabs().byId(id).activate()` — bring a tab to the foreground (active + focused).
 
 ### Changed
 - `openOrcaTab()` now **focuses** the new tab by default (Orca opened it in the background), so you can watch the run. Pass `{ focus: false }` to keep it backgrounded.

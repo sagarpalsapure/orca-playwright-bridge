@@ -1,0 +1,13 @@
+{
+  "name": "orca-playwright-bridge",
+  "owner": { "name": "Sagar Palsapure", "url": "https://github.com/sagarpalsapure" },
+  "plugins": [
+    {
+      "name": "orca-playwright-bridge",
+      "source": "./",
+      "version": "1.0.7",
+      "description": "Drive Orca's embedded browser with Playwright or raw CDP — the orca-browser skill plus /orca-pw and /orca-test commands.",
+      "keywords": ["orca", "playwright", "cdp", "browser-automation"]
+    }
+  ]
+}
