@@ -2,6 +2,18 @@
 
 All notable changes to `orca-playwright-bridge`. Verified against the Orca release noted per entry.
 
+## [1.2.0] — Orca v1.4.117
+
+### Added (new `orcaTabs()` verbs from Orca 1.4.117)
+- **Dialog handling** — `acceptDialog(text?)` / `dismissDialog()` for JS `alert`/`confirm`/`prompt` (previously an unavoidable blocker).
+- **Web storage** — `getStorage(key)` / `setStorage(key, value)` / `clearWebStorage()` (native, `{ session: true }` for sessionStorage).
+- `highlight(selector)` — outline an element (demos/debugging).
+- `download(selector, path)` — download a file by selector.
+- `exec(command)` — escape hatch to run any raw agent-browser command.
+
+### Verified
+- Re-ran every documented limitation against **Orca 1.4.117**: **none fixed** — profile isolation (#6923), `page.reload` (#7031), `page.pdf` (#7032), `newCDPSession` (#7033), `page.fill`-focus (#7035) all still hold. README re-stamped to 1.4.117. (Clipboard verbs exist in 1.4.117 but are permission-gated, so not wrapped.)
+
 ## [1.1.1]
 
 ### Docs

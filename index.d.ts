@@ -108,6 +108,21 @@ export interface TabDriver {
   mouseWheel(dy: number, dx?: number): any;
   /** Bring this tab to the foreground (active + focused). */
   activate(): any;
+  // Orca 1.4.117+
+  /** Accept a pending JS dialog; `text` answers a prompt. */
+  acceptDialog(text?: string): any;
+  /** Dismiss a pending JS dialog (no-ops if none open). */
+  dismissDialog(): any;
+  /** Read a storage value by key (opts.session → sessionStorage). */
+  getStorage(key: string, opts?: { session?: boolean }): string | undefined;
+  setStorage(key: string, value: string, opts?: { session?: boolean }): any;
+  clearWebStorage(opts?: { session?: boolean }): any;
+  /** Outline an element by CSS selector (demos/debugging). */
+  highlight(selector: string): any;
+  /** Download the file behind `selector` to `path`. */
+  download(selector: string, path: string): any;
+  /** Escape hatch: run any raw agent-browser command against this tab. */
+  exec(command: string): any;
 }
 
 export interface OrcaTabs {

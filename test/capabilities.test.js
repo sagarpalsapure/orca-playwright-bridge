@@ -121,6 +121,25 @@ test('orcaTabs().find() locates by role and clicks (semantic locator)', { skip: 
   } finally { tab.close(); }
 });
 
+test('orcaTabs().highlight() outlines an element (1.4.117)', { skip: SKIP }, async () => {
+  const tab = await openNativeTab('data:text/html,<title>hl</title><h1>hi</h1>');
+  try {
+    const r = orcaTabs().byId(tab.pageId).highlight('h1');
+    assert.ok(r && (r.highlighted === 'h1' || r.highlighted), JSON.stringify(r));
+  } finally { tab.close(); }
+});
+
+test('orcaTabs().setStorage()/getStorage() round-trip (1.4.117)', { skip: SKIP }, async () => {
+  const tab = await openNativeTab('https://example.com');   // real origin (data: URLs are opaque, no storage)
+  try {
+    await sleep(1500);
+    const d = orcaTabs().byId(tab.pageId);
+    d.setStorage('k117', 'v117');
+    assert.equal(d.getStorage('k117'), 'v117');
+    d.clearWebStorage();
+  } finally { tab.close(); }
+});
+
 test('orcaTabs().mouseWheel() scrolls the page', { skip: SKIP }, async () => {
   const tab = await openNativeTab('data:text/html,<title>wheel</title><div style="height:3000px"></div>');
   try {

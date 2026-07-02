@@ -6,7 +6,7 @@ Drive the **[Orca](https://github.com/stablyai/orca)** app's embedded Chromium b
 
 Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Protocol (CDP) proxy**. Playwright's `connectOverCDP` can't talk to it directly (it sees the page but zero usable contexts). This package bridges the gap.
 
-> ⚠️ **Unofficial / reverse-engineered.** Orca ships no public browser-automation API (verified through release **v1.4.114** — its `orca` CLI exposes a rich browser verb set, but no CDP/Playwright bridge). This works by reverse-engineering Orca's internal CDP proxy and Playwright's `connectOverCDP` handshake. An Orca **or** Playwright upgrade could change either side and require a tweak. The patches are small and commented in `lib/orca-pw-bridge.js` — and `npm test` exercises the whole stack against a live Orca so breakage is easy to catch (see [Tests](#tests)).
+> ⚠️ **Unofficial / reverse-engineered.** Orca ships no public browser-automation API (verified through release **v1.4.117** — its `orca` CLI exposes a rich browser verb set, but no CDP/Playwright bridge). This works by reverse-engineering Orca's internal CDP proxy and Playwright's `connectOverCDP` handshake. An Orca **or** Playwright upgrade could change either side and require a tweak. The patches are small and commented in `lib/orca-pw-bridge.js` — and `npm test` exercises the whole stack against a live Orca so breakage is easy to catch (see [Tests](#tests)).
 
 ## Quickstart
 
@@ -188,6 +188,7 @@ It mirrors Orca's full native browser surface. The per-verb methods are **synchr
 | **Locate** | `find(locator, value, { action, text })` — by `role`/`text`/`label`, acts in one call; unlike refs, semantic locators survive navigation |
 | **Mouse** | `mouseMove(x, y)` · `mouseDown()` · `mouseUp()` · `mouseWheel(dy, dx?)` |
 | **Emulate** | `setDevice(name)` · `setOffline(on?)` · `setHeaders(obj)` · `setCredentials(user, pass)` · `setMedia({ colorScheme, reducedMotion })` |
+| **Dialogs / storage / misc** (Orca 1.4.117+) | `acceptDialog(text?)` · `dismissDialog()` · `getStorage(key)` / `setStorage(key, val)` / `clearWebStorage()` · `highlight(sel)` · `download(sel, path)` · `exec(cmd)` |
 
 Refs (`e1`, `e2`, …) come from `snapshot()` and change after navigation — re-snapshot before interacting. Or skip refs entirely with **semantic locators** (Orca 1.4.114+), which don't go stale:
 
@@ -270,7 +271,7 @@ What works:
 - **Emulation** — device, offline, media, extra headers, and HTTP-auth credentials, via `orcaTabs().setDevice()` / `setOffline()` / `setMedia()` / `setHeaders()` / `setCredentials()` (Orca's native `set` primitives).
 - **Raw-CDP power tools** — the proxy answers ~35 CDP domains on the page socket, so `connectOrca()` reaches what Playwright's blocked `newCDPSession` can't: `captureConsole()` (logs + JS errors), `recordNetwork()`, `throttle()`/`offline()`, `cookies()`/`setCookie()`, `emulate({ device, timezone, cpu })` (no reload), `axTree()`, `metrics()`, `fullPageScreenshot()`, `captureMHTML()`, `recordScreencast()`, `blockRequests()`.
 
-Genuine limits (re-verified against Orca v1.4.114 — none fixed since 1.4.110):
+Genuine limits (re-verified against Orca v1.4.117 — none fixed since 1.4.110):
 - **Playwright can't call `newPage`/`newContext` directly** — the proxy rejects `Target.createTarget`. Use `openOrcaTab()` instead. ([stablyai/orca#7034](https://github.com/stablyai/orca/issues/7034))
 - **No `page.reload()` through Playwright** — it closes the tab. Use the connection's safe `reload()` (re-navigates the current URL), `orcaTabs().reload()`, or re-`page.goto(url)`. ([stablyai/orca#7031](https://github.com/stablyai/orca/issues/7031))
 - **No `context.newCDPSession()`** — the proxy rejects `Target.attachToBrowserTarget` (`Not allowed`), so raw CDP sessions over Playwright are out. Drive low-level emulation through the `orcaTabs().set*` helpers instead. ([stablyai/orca#7033](https://github.com/stablyai/orca/issues/7033))
