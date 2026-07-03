@@ -109,7 +109,10 @@ export interface TabDriver {
   /** Bring this tab to the foreground (active + focused). */
   activate(): any;
   // Orca 1.4.117+
-  /** Accept a pending JS dialog; `text` answers a prompt. */
+  /**
+   * Accept a pending JS dialog. In practice only confirm() opens one — Orca
+   * swallows alert() and prompt() throws "not supported" (stub prompt instead).
+   */
   acceptDialog(text?: string): any;
   /** Dismiss a pending JS dialog (no-ops if none open). */
   dismissDialog(): any;

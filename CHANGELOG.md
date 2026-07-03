@@ -2,6 +2,48 @@
 
 All notable changes to `orca-playwright-bridge`. Verified against the Orca release noted per entry.
 
+## [1.5.0] — Orca v1.4.120
+
+### Changed — one package, two surfaces (skill reorganization)
+- **Unified the skill around Orca as the host, not the browser.** The `orca-browser` skill is now **`orca-automation`** (`skills/orca/`), with a routing `SKILL.md` that sends browser tasks to `references/browser/*` and mobile tasks to `references/mobile/*`.
+  - `skills/orca-browser/references/*.md` (the 9 browser deep-dives) → `skills/orca/references/browser/`.
+  - `mobile-maestro.md` split into `skills/orca/references/mobile/`: `devices-and-setup.md`, `flows.md`, and a new **`maestro-mcp.md`** (Maestro MCP vs. the programmatic driver, and pinning the MCP to Orca's device via `orca-playwright-bridge/maestro`'s resolvers).
+- **No API changes** — the JS surface (`.`, `./connect`, `./maestro`) is untouched; this is a docs/skill layout change plus manifest/README rewording to tell the unified "browser + mobile from one package" story.
+- Reframed `plugin.json` / `marketplace.json` descriptions and added `maestro` / `mobile-automation` / `ios-simulator` / `android-emulator` keywords.
+
+## [1.4.0] — Orca v1.4.120
+
+### Added — native mobile automation (iOS + Android) via Maestro
+- **`orca-playwright-bridge/maestro`** — a new entry point that drives native mobile apps with [Maestro](https://maestro.mobile.dev), pointed at the device Orca boots. The mobile analogue of the browser bridge: Orca manages the iOS simulator through its `serve-sim` helper, and Maestro drives the *same* device by id.
+  - **`iosMaestro(opts)`** — driver bound to Orca's booted iOS simulator (or attaches one via `orca emulator attach` when `{ device }` is given).
+  - **`androidMaestro(opts)`** — driver bound to a booted Android emulator/device (resolved through `adb`).
+  - **Opens the device in Orca automatically.** Creating a driver attaches the device in Orca by default so it appears in the app — iOS via serve-sim, Android via scrcpy (the driver resolves the AVD name from the serial and runs `orca emulator attach`). Best-effort (never blocks driving if Orca is down); opt out with `{ attachToOrca: false }`. `driver.orcaMirrored` reports the attach info.
+  - **`flow(appId)`** — a fluent `Flow` builder that emits Maestro YAML: `launchApp`/`tapOn`/`inputText`/`pressKey`/`swipe`/`assertVisible`/`openLink`/`takeScreenshot`/… plus `raw()` for any un-wrapped command.
+  - Driver methods: `runFlow()` (returns `{ ok, stdout, stderr, yaml }` — never rejects), `hierarchy()` (JSON view-tree snapshot, the DOM/AX analogue), `screenshot()` (via `simctl` on iOS, `adb exec-out screencap` on Android), and one-command helpers `launchApp`/`tapOn`/`inputText`/`openLink`.
+  - **JDK auto-discovery** — Maestro is JVM-based; the driver finds a Homebrew keg-only / macOS / SDKMAN JDK and injects `JAVA_HOME` for the Maestro child process, so no shell PATH setup is required.
+  - Types in `maestro.d.ts`; skill playbook in `skills/orca/references/mobile/`.
+
+### Verified (live, Orca 1.4.120)
+- Ran the driver against a live **iOS Simulator** (iPhone 17, iOS 26.5) and **Android emulator** (Pixel 8 Pro): **5/5 checks each** — `hierarchy()` view-tree, `screenshot()` PNG (iOS 152 KB via simctl, Android 1.8 MB via adb — confirmed a real Pixel home screen), launch Settings, foreground assertion, and `openLink`.
+- Mapped Orca's `serve-sim` control surface while evaluating approaches: `orca emulator tap/type/button/rotate/gesture` (gesture takes a JSON **array** of `{type:begin|move|end, x, y}` normalized 0..1 points), `/ax` accessibility tree (frames in points; screen = root frame), screenshot via `simctl`. serve-sim also embeds a CDP/WebInspector bridge, but its `/json` endpoints are empty on the control port — no verified path into simulator web content yet.
+- **Orca's emulator is cross-platform** (verified live): `orca emulator attach "<name>"` makes a device Orca's active emulator — iOS via serve-sim (`backend: ios`) or **Android mirrored over scrcpy + adb** (`backend: android`, `streamUrl: scrcpy://<serial>`). Orca boots the iOS sim itself; for Android it attaches to an already-running AVD. `orca emulator list` reports only the iOS serve-sim helper (`running: false` even when Android is attached and scrcpy is live). The `androidMaestro()` driver drives over `adb` independently of Orca's mirroring.
+
+## [1.3.0] — Orca v1.4.120
+
+### Added
+- **Skill references** (playwright-cli-style): the `orca-browser` skill now ships a `references/` directory with task-focused deep dives — connection & multi-session safety, multi-tab & popups, network (HAR/mock/block), emulation, cookies & storage, capture, tracing, debugging, and a live-probed CDP availability matrix. `SKILL.md` stays lean and links out per task.
+
+### Fixed
+- **`clearEmulation()` now clears everything `emulate()` sets.** It previously reset only device metrics + CPU rate, leaving the user-agent, timezone, locale, and `prefers-color-scheme` overrides stuck on the tab after disconnect. (Caught by validating the skill's emulation recipe against live Orca.)
+
+### Discovered & documented (recipe validation against live Orca 1.4.120)
+- **One CDP client per tab — last attach wins.** Attaching raw CDP, a second Playwright bridge, or even a one-shot native `orca … --page` verb silently disconnects the tab's current client (verified in every direction; other tabs unaffected). Docs previously implied Playwright + raw CDP could share a tab concurrently — they cannot. Safe sequencing patterns documented in the skill + README.
+- **JS dialogs: only `confirm()` is real.** Orca swallows `alert()` silently and `prompt()` throws `"prompt() is not supported."` in-page. `confirm()` verified working via both native `acceptDialog()`/`dismissDialog()` and Playwright `page.on('dialog')` through the bridge. The 1.2.0 note that `acceptDialog(text)` "answers a prompt" is moot — no prompt dialog can appear; stub `window.prompt` instead.
+
+### Verified (live CDP probe, Orca 1.4.120)
+- **`Tracing` works end-to-end** — `Tracing.start` → `tracingComplete` → `IO.read` stream returns real Chrome trace files (`devtools.timeline`, `blink.user_timing` marks included). Previously undocumented; recipe in `skills/orca/references/browser/tracing.md`.
+- ~50 methods probed across Page/Network/Fetch/Emulation/diagnostics domains: everything answers **except `Page.printToPDF`** (the known #7032 gap). Newly confirmed available: `Emulation.setGeolocationOverride`/`setUserAgentOverride`/`setTouchEmulationEnabled`/`setEmulatedVisionDeficiency`/`setIdleOverride`, `Profiler` (JS coverage), `CSS.startRuleUsageTracking` (CSS coverage), `DOMSnapshot.captureSnapshot`, `Page.addScriptToEvaluateOnNewDocument`, `Page.setBypassCSP`, `Page.setDownloadBehavior`, `Page.setInterceptFileChooserDialog`, `Page.getNavigationHistory`, `WebAuthn`, `IndexedDB`, `ServiceWorker`, `Storage.getUsageAndQuota`. Full matrix: `skills/orca/references/browser/cdp-availability.md`.
+
 ## [1.2.3] — Orca v1.4.120
 
 ### Fixed

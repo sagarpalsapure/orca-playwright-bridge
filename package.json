@@ -1,6 +1,6 @@
 {
   "name": "orca-playwright-bridge",
-  "version": "1.2.3",
+  "version": "1.5.0",
   "description": "Drive the Orca app's embedded Chromium browser with Playwright (or raw CDP) by bridging its internal Chrome DevTools Protocol proxy.",
   "license": "MIT",
   "bin": {
@@ -21,6 +21,10 @@
     "./connect": {
       "types": "./connect.d.ts",
       "default": "./lib/orca-connect.js"
+    },
+    "./maestro": {
+      "types": "./maestro.d.ts",
+      "default": "./lib/orca-maestro.js"
     }
   },
   "files": [
@@ -31,6 +35,7 @@
     ".claude-plugin/",
     "index.d.ts",
     "connect.d.ts",
+    "maestro.d.ts",
     "install.sh",
     "get.sh",
     "README.md",
