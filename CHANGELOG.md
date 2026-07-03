@@ -2,6 +2,14 @@
 
 All notable changes to `orca-playwright-bridge`. Verified against the Orca release noted per entry.
 
+## [1.2.1] — Orca v1.4.120
+
+### Fixed upstream (docs updated)
+- **`page.reload()` now works** — Orca **1.4.120** fixed it (it previously closed the tab; [stablyai/orca#7031](https://github.com/stablyai/orca/issues/7031)). Verified: reload keeps the tab and re-executes the document. The `reload()` helper remains as a fallback for Orca < 1.4.120. README/skill/command traps updated.
+
+### Verified
+- Re-ran the rest against **Orca 1.4.120** — still hold: profile isolation (#6923), `page.pdf` (#7032), `newCDPSession` (#7033), `page.fill`-focus (#7035). No new browser verbs since 1.4.117.
+
 ## [1.2.0] — Orca v1.4.117
 
 ### Added (new `orcaTabs()` verbs from Orca 1.4.117)

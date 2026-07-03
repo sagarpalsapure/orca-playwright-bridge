@@ -21,4 +21,4 @@ try {
 2. Do the task; report each result pass/fail with the actual value + the screenshot path.
 3. If you drove my live tab, restore its URL when done.
 
-Gotchas: `click` before `fill`; `page.reload()` closes the tab (use `t.reload()`); popups → `waitForNewTab`; iframes read-only via `frameLocator`. For the rest, lean on the `orca-browser` skill.
+Gotchas: `click` before `fill`; popups → `waitForNewTab`; iframes read-only via `frameLocator` (`page.reload()` closed the tab on Orca < 1.4.120 — use `t.reload()` there). For the rest, lean on the `orca-browser` skill.

@@ -60,7 +60,7 @@ await orca.close();
 | Trap | Do this instead |
 | --- | --- |
 | `page.fill()` no-ops unless the field is focused | `await page.click(sel); await page.fill(sel, val)` (or `keyboard.type`) |
-| `page.reload()` **closes the tab** | the connection's `reload()`, or `orcaTabs().reload()`, or re-`page.goto(url)` |
+| `page.reload()` closed the tab on Orca **< 1.4.120** (fixed since) | on current Orca `page.reload()` is fine; for older, use the connection's `reload()` |
 | `browser.newPage()`/`newContext()` rejected | `openOrcaTab(url)` |
 | `target=_blank`/popup → new Orca tab with **no CDP endpoint** (no Playwright `popup`) | `waitForNewTab(action)` → drive via the returned native `tab` driver |
 | `page.route().continue()/abort()` **hangs** on real requests | `connectOrca().blockRequests(patterns)`. `route.fulfill()` (pure mock) is fine |

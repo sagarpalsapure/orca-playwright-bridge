@@ -6,7 +6,7 @@ Drive the **[Orca](https://github.com/stablyai/orca)** app's embedded Chromium b
 
 Orca's embedded browser exposes an **internal, undocumented Chrome DevTools Protocol (CDP) proxy**. Playwright's `connectOverCDP` can't talk to it directly (it sees the page but zero usable contexts). This package bridges the gap.
 
-> ⚠️ **Unofficial / reverse-engineered.** Orca ships no public browser-automation API (verified through release **v1.4.117** — its `orca` CLI exposes a rich browser verb set, but no CDP/Playwright bridge). This works by reverse-engineering Orca's internal CDP proxy and Playwright's `connectOverCDP` handshake. An Orca **or** Playwright upgrade could change either side and require a tweak. The patches are small and commented in `lib/orca-pw-bridge.js` — and `npm test` exercises the whole stack against a live Orca so breakage is easy to catch (see [Tests](#tests)).
+> ⚠️ **Unofficial / reverse-engineered.** Orca ships no public browser-automation API (verified through release **v1.4.120** — its `orca` CLI exposes a rich browser verb set, but no CDP/Playwright bridge). This works by reverse-engineering Orca's internal CDP proxy and Playwright's `connectOverCDP` handshake. An Orca **or** Playwright upgrade could change either side and require a tweak. The patches are small and commented in `lib/orca-pw-bridge.js` — and `npm test` exercises the whole stack against a live Orca so breakage is easy to catch (see [Tests](#tests)).
 
 ## Quickstart
 
@@ -271,9 +271,9 @@ What works:
 - **Emulation** — device, offline, media, extra headers, and HTTP-auth credentials, via `orcaTabs().setDevice()` / `setOffline()` / `setMedia()` / `setHeaders()` / `setCredentials()` (Orca's native `set` primitives).
 - **Raw-CDP power tools** — the proxy answers ~35 CDP domains on the page socket, so `connectOrca()` reaches what Playwright's blocked `newCDPSession` can't: `captureConsole()` (logs + JS errors), `recordNetwork()`, `throttle()`/`offline()`, `cookies()`/`setCookie()`, `emulate({ device, timezone, cpu })` (no reload), `axTree()`, `metrics()`, `fullPageScreenshot()`, `captureMHTML()`, `recordScreencast()`, `blockRequests()`.
 
-Genuine limits (re-verified against Orca v1.4.117 — none fixed since 1.4.110):
+Genuine limits (re-verified against Orca v1.4.120 — page.reload fixed in 1.4.120, the rest still hold):
 - **Playwright can't call `newPage`/`newContext` directly** — the proxy rejects `Target.createTarget`. Use `openOrcaTab()` instead. ([stablyai/orca#7034](https://github.com/stablyai/orca/issues/7034))
-- **No `page.reload()` through Playwright** — it closes the tab. Use the connection's safe `reload()` (re-navigates the current URL), `orcaTabs().reload()`, or re-`page.goto(url)`. ([stablyai/orca#7031](https://github.com/stablyai/orca/issues/7031))
+- **`page.reload()`** — ✅ **fixed upstream in Orca 1.4.120** ([stablyai/orca#7031](https://github.com/stablyai/orca/issues/7031)); it reloads the tab correctly now. On **older Orca (< 1.4.120)** it closed the tab — the connection's `reload()` helper (re-navigates the current URL) works on every version if you need the fallback.
 - **No `context.newCDPSession()`** — the proxy rejects `Target.attachToBrowserTarget` (`Not allowed`), so raw CDP sessions over Playwright are out. Drive low-level emulation through the `orcaTabs().set*` helpers instead. ([stablyai/orca#7033](https://github.com/stablyai/orca/issues/7033))
 - **Playwright `page.route()` `continue()`/`abort()` hangs on real requests** — its Network↔Fetch correlation breaks across the bridge's session/frame rewriting. `route.fulfill()` (pure mock) works. For intercepting/blocking *real* requests, use the raw-CDP driver's `blockRequests()` — CDP `Fetch.continueRequest`/`failRequest` work fine directly. (Bridge-side, not an Orca gap.)
 - **`<iframe>`s are readable but not interactive.** As of the frame-id fix, child frames are exposed (`page.frames()` includes them) and **readable via `frameLocator()`** — including cross-origin, which the old `contentDocument` trick couldn't reach. But *interaction* (`click`/`fill`) and `frame.evaluate()` inside an iframe **hang**: Orca doesn't expose a child frame's main-world context and the bridge can't synthesize a routable one. So: read iframe content with `frameLocator`; for *writes* to a same-origin iframe use `page.evaluate(() => document.querySelector('iframe').contentDocument…)`.
@@ -297,7 +297,7 @@ Open the URL, select or open a tab, then drive it. Native verbs run over `orcaTa
 
 ## Claude Code plugin / skill
 
-This repo is also a [Claude Code](https://claude.com/claude-code) plugin. It ships the **`orca-browser` skill**, which Claude invokes automatically when a task needs to drive a page inside the Orca app — it carries the capability map *and* the verified traps (click-then-fill, `page.reload()` closes the tab, popups → `waitForNewTab`, `page.route` → `blockRequests`, iframes read-only, …) so the agent uses the bridge correctly on the first try instead of discovering the sharp edges the hard way. It also bundles the `/orca` slash command.
+This repo is also a [Claude Code](https://claude.com/claude-code) plugin. It ships the **`orca-browser` skill**, which Claude invokes automatically when a task needs to drive a page inside the Orca app — it carries the capability map *and* the verified traps (click-then-fill, popups → `waitForNewTab`, `page.route` → `blockRequests`, iframes read-only, …) so the agent uses the bridge correctly on the first try instead of discovering the sharp edges the hard way. It also bundles the `/orca` slash command.
 
 Add it via the plugin marketplace (from a Git checkout):
 
