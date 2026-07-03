@@ -2,6 +2,17 @@
 
 All notable changes to `orca-playwright-bridge`. Verified against the Orca release noted per entry.
 
+## [1.2.3] — Orca v1.4.120
+
+### Fixed
+- **Multi-session cross-driving** — when two independent drivers ran against Orca, one could start driving the other's tab. Root cause: default discovery fell back to "the first/active endpoint," which flips whenever any session opens or focuses a tab.
+  - `discoverCdpUrl()` now **throws with the full tab list** when >1 tab is open and no tab was specified, instead of silently picking the active one.
+  - `openOrcaTab()` resolves its tab's CDP port by the created `browserPageId` (URL join, diff as tiebreaker) rather than a bare port-set diff — closing a race when two sessions open tabs at once.
+
+### Added
+- **`attachOrcaTab(pageId)`** — re-attach Playwright to a tab you already own by its `browserPageId`, regardless of which tab is focused. The multi-session-safe way to reconnect. `close()` detaches the bridge but leaves the tab open.
+- **`findEndpointForPageId(pageId, preferNotIn?)`** — resolve the CDP endpoint serving a given `browserPageId` (exported helper).
+
 ## [1.2.2] — Orca v1.4.120
 
 ### Added

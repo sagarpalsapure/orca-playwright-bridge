@@ -18,8 +18,8 @@ const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
 
 const {
-  connectOrcaPlaywright, openOrcaTab,
-  orcaTabs, discoverAllCdpEndpoints,
+  connectOrcaPlaywright, openOrcaTab, attachOrcaTab,
+  orcaTabs, discoverAllCdpEndpoints, findEndpointForPageId,
 } = require('..');
 const { connectOrca } = require('../lib/orca-connect.js'); // raw-CDP driver lives in ./connect
 
@@ -136,6 +136,29 @@ test('connectOrcaPlaywright({ tab }) targets a tab by URL match', { skip: SKIP }
       assert.equal(await conn.page.title(), MARKER);
     } finally { await conn.close(); }
   } finally { tab.close(); }
+});
+
+test('attachOrcaTab(pageId) pins to a specific tab, not the active one', { skip: SKIP }, async () => {
+  // Two tabs open at once. The SECOND is active (most recently created), so any
+  // "active/first" discovery would resolve to it. attachOrcaTab(tabA.pageId)
+  // must still land on tab A — this is the multi-session anti-cross-drive fix.
+  const A = `${PAGE.replace(MARKER, MARKER + 'A')}`;
+  const B = `${PAGE.replace(MARKER, MARKER + 'B')}`;
+  const tabA = await openTab(A);
+  const tabB = await openTab(B);   // opened last → active
+  try {
+    // pin by the endpoint join, independent of which tab is active
+    const epA = findEndpointForPageId(tabA.pageId);
+    assert.equal(epA.cdpUrl, tabA.cdpUrl, 'findEndpointForPageId should resolve tab A by its own pageId');
+
+    const conn = await attachOrcaTab(tabA.pageId);
+    try {
+      assert.equal(await conn.page.title(), MARKER + 'A', 'attached page must be tab A, not the active tab B');
+      assert.equal(conn.browserPageId, tabA.pageId);
+    } finally { await conn.close(); }   // detaches only — must NOT close the tab
+    // the tab we attached to is still open (attach ≠ create)
+    assert.ok(orcaTabs().list.some((t) => t.pageId === tabA.pageId), 'attachOrcaTab.close() must leave the tab open');
+  } finally { tabA.close(); tabB.close(); }
 });
 
 // Belt-and-suspenders: make sure we never leave self-test tabs behind.

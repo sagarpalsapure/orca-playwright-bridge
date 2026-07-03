@@ -152,6 +152,15 @@ export function startBridge(opts?: StartBridgeOptions): Promise<Bridge>;
 export function connectOrcaPlaywright(opts?: ConnectPlaywrightOptions): Promise<OrcaPlaywright>;
 export function openOrcaTab(url: string, opts?: { profile?: string; focus?: boolean }): Promise<OrcaPlaywright>;
 /**
+ * Re-attach Playwright to a tab you already own, by its browserPageId — the
+ * multi-session-safe reconnect. Pins to the exact tab regardless of which is
+ * active, so a second session can't steal the first session's tab. close()
+ * detaches the bridge but leaves the tab open.
+ */
+export function attachOrcaTab(pageId: string, opts?: ConnectPlaywrightOptions): Promise<OrcaPlaywright>;
+/** Resolve the CDP endpoint serving the tab with the given browserPageId (or null). */
+export function findEndpointForPageId(pageId: string, preferNotIn?: Set<number>): CdpEndpoint | null;
+/**
  * Run an action that opens a new tab/window and return a driver for it.
  * Popups have no CDP endpoint (Playwright can't attach), so `tab` is the native
  * orcaTabs() driver.
