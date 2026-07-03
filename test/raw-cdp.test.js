@@ -104,6 +104,18 @@ test('blockRequests() intercepts real requests via CDP Fetch', { skip: SKIP }, a
   } finally { await o.close(); tab.close(); }
 });
 
+test('mockResponse() fulfills matching requests and passes the rest', { skip: SKIP }, async () => {
+  const tab = await openRawTab('data:text/html,<title>m</title>');
+  const o = await connectOrca({ cdpUrl: tab.cdpUrl });
+  try {
+    const m = await o.mockResponse('example.com', { body: '<title>MOCKED-RAW</title>' });
+    await o.goto('https://example.com', { waitMs: 3000 }).catch(() => {});
+    assert.equal(await o.evaluate('document.title'), 'MOCKED-RAW', 'mocked body should replace the real response');
+    assert.ok(m.counts.mocked >= 1, 'at least the navigation should be mocked');
+    await m.stop();
+  } finally { await o.close(); tab.close(); }
+});
+
 test('recordScreencast() captures frames while the page changes', { skip: SKIP }, async () => {
   const tab = await openRawTab('data:text/html,<title>sc</title><div style="height:3000px;background:linear-gradient(#e00,#00e)"></div>');
   const o = await connectOrca({ cdpUrl: tab.cdpUrl });

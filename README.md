@@ -242,6 +242,8 @@ const rec = await orca.recordScreencast();        // { frames, save(dir), stop }
 await orca.throttle('slow-3g');                   // or orca.offline()
 const blk = await orca.blockRequests(['.css', /analytics/, (u) => u.endsWith('.png')]);
 // … navigate …  blk.counts -> { blocked, allowed };  await blk.stop();
+const mck = await orca.mockResponse('/api/user', { status: 200, body: '{"name":"Ada"}', contentType: 'application/json' });
+// matched requests get the canned response; the rest pass through.  mck.counts -> { mocked, passed };  await mck.stop();
 
 await orca.close();
 // anything else is one call: await orca.client.send('Domain.method', params)
@@ -266,10 +268,10 @@ What works:
 - **Open new tabs** — `openOrcaTab(url)` is the `newPage` equivalent: it runs `orca tab create`, attaches Playwright to the new tab, and its `close()` tears down both. **`waitForNewTab(action)`** captures a *page-spawned* popup (which has no CDP endpoint) and returns a native `orcaTabs()` driver for it.
 - **`orcaTabs()`** — lightweight concurrent driver over Orca's native CLI (`orca … --page <id>`), no bridge needed.
 - **Advanced Playwright, verified through the bridge** — `page.route()` **mocking** (`route.fulfill`), `page.routeWebSocket()` WebSocket mocking, the `context.cookies()` / `addCookies()` API, and `page.emulateMedia()` all tunnel through (each has a regression test in `test/capabilities.test.js`).
-- **Request interception on real sites** — via the raw-CDP driver's `blockRequests(patterns)` (CDP `Fetch`). Use this to block/allow real requests; Playwright's `route.continue()`/`abort()` on real requests hangs through the bridge (see limits).
+- **Request interception on real sites** — via the raw-CDP driver's `blockRequests(patterns)` and `mockResponse(patterns, response)` (CDP `Fetch`). Use these to block, allow, or fulfill real requests with canned responses; Playwright's `route.continue()`/`abort()` on real requests hangs through the bridge (see limits).
 - **Clean attach** — `connectOrcaPlaywright()` connects with `isLocal: true` (same-host filesystem speedups) and `noDefaults: true` (don't stamp Playwright's download/focus/media overrides onto Orca's live browser). Override via `connectOrcaPlaywright({ connectOptions: { … } })`.
 - **Emulation** — device, offline, media, extra headers, and HTTP-auth credentials, via `orcaTabs().setDevice()` / `setOffline()` / `setMedia()` / `setHeaders()` / `setCredentials()` (Orca's native `set` primitives).
-- **Raw-CDP power tools** — the proxy answers ~35 CDP domains on the page socket, so `connectOrca()` reaches what Playwright's blocked `newCDPSession` can't: `captureConsole()` (logs + JS errors), `recordNetwork()`, `throttle()`/`offline()`, `cookies()`/`setCookie()`, `emulate({ device, timezone, cpu })` (no reload), `axTree()`, `metrics()`, `fullPageScreenshot()`, `captureMHTML()`, `recordScreencast()`, `blockRequests()`.
+- **Raw-CDP power tools** — the proxy answers ~35 CDP domains on the page socket, so `connectOrca()` reaches what Playwright's blocked `newCDPSession` can't: `captureConsole()` (logs + JS errors), `recordNetwork()`, `throttle()`/`offline()`, `cookies()`/`setCookie()`, `emulate({ device, timezone, cpu })` (no reload), `axTree()`, `metrics()`, `fullPageScreenshot()`, `captureMHTML()`, `recordScreencast()`, `blockRequests()`, `mockResponse()`.
 
 Genuine limits (re-verified against Orca v1.4.120 — page.reload fixed in 1.4.120, the rest still hold):
 - **Playwright can't call `newPage`/`newContext` directly** — the proxy rejects `Target.createTarget`. Use `openOrcaTab()` instead. ([stablyai/orca#7034](https://github.com/stablyai/orca/issues/7034))

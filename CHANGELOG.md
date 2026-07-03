@@ -2,6 +2,14 @@
 
 All notable changes to `orca-playwright-bridge`. Verified against the Orca release noted per entry.
 
+## [1.2.2] — Orca v1.4.120
+
+### Added
+- **`mockResponse(patterns, response)`** on the raw-CDP driver (`connectOrca()`) — fulfill matching requests with a canned response (status/headers/body) via CDP `Fetch.fulfillRequest` while letting the rest pass through. The reliable alternative to Playwright's `route.continue()`, which hangs on real requests through the bridge. Returns `{ counts: { mocked, passed }, stop() }`.
+
+### Verified / not added
+- Probed `Network.getResponseBody` for HAR-with-bodies: unreliable through the proxy (`No resource with given identifier found`), so it's intentionally left out.
+
 ## [1.2.1] — Orca v1.4.120
 
 ### Fixed upstream (docs updated)

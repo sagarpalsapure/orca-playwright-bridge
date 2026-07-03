@@ -80,6 +80,11 @@ export interface OrcaCdp {
   blockRequests(
     patterns: Array<string | RegExp | ((url: string) => boolean)> | string | RegExp | ((url: string) => boolean)
   ): Promise<{ counts: { blocked: number; allowed: number }; stop(): Promise<void> }>;
+  /** Mock responses for matching requests via CDP Fetch (fulfill matched, pass the rest). */
+  mockResponse(
+    patterns: Array<string | RegExp | ((url: string) => boolean)> | string | RegExp | ((url: string) => boolean),
+    response?: { status?: number; contentType?: string; headers?: Record<string, string>; body?: string }
+  ): Promise<{ counts: { mocked: number; passed: number }; stop(): Promise<void> }>;
 
   cookies(urls?: string | string[]): Promise<any[]>;
   setCookie(cookie: Record<string, unknown>): Promise<any>;
