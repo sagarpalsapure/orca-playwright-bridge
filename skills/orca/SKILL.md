@@ -65,6 +65,7 @@ const orca = await connectOrca();
 const net = await orca.recordNetwork();                        // .har() -> HAR 1.2
 await orca.emulate({ device: 'iPhone 12', timezone: 'Asia/Tokyo' });   // instant, no reload
 await orca.fullPageScreenshot('page.png');
+await orca.pdf('page.pdf');                                     // Page.printToPDF (Orca 1.4.123+)
 const blk = await orca.blockRequests(['.css', /analytics/]);   // real request blocking
 // … also: cookies(), storage(), axTree(), metrics(), captureMHTML(), recordScreencast()
 await orca.close();
@@ -80,8 +81,6 @@ await orca.close();
 | `page.route().continue()/abort()` **hangs** on real requests | `connectOrca().blockRequests(patterns)`. `route.fulfill()` (pure mock) is fine |
 | `context.newCDPSession()` blocked (`Target.attachToBrowserTarget`) | raw `connectOrca()` reaches Emulation/Network/Accessibility/Performance directly |
 | iframe **interaction** / `frame.evaluate()` **hangs** | iframes are **readable** via `frameLocator()` (incl. cross-origin); for same-origin writes use `page.evaluate(() => document.querySelector('iframe').contentDocument…)` |
-| `page.pdf()` — `Page.printToPDF` absent | `fullPageScreenshot()` or `captureMHTML()` |
-| `--scope isolated` profiles still **share** localStorage/cookies | Orca-side bug (stablyai/orca#6923) — don't rely on profile isolation |
 | **One client per tab** — attaching raw CDP, a second bridge, or ANY native `orcaTabs()` verb silently kills the tab's current client (`Target … has been closed` / `WebSocket … closed`) | Sequence clients; while capturing (network/screencast/trace) drive via that same client (`orca.evaluate`); re-attach with `attachOrcaTab(pageId)` afterwards |
 | `alert()` is **silently swallowed** (no dialog); `prompt()` **throws** "not supported" | Only `confirm()` shows a real dialog — `acceptDialog()`/`dismissDialog()` or `page.on('dialog')` both work. For `prompt`: stub it first — `page.evaluate(() => { window.prompt = () => 'answer'; })` |
 

@@ -96,6 +96,8 @@ export interface OrcaCdp {
   clearEmulation(): Promise<void>;
   fullPageScreenshot(path?: string, opts?: { format?: 'png' | 'jpeg' }): Promise<Buffer>;
   captureMHTML(path?: string): Promise<string>;
+  /** Print to PDF via Page.printToPDF (works on Orca 1.4.123+; stablyai/orca#7032). Opts pass to CDP. */
+  pdf(path?: string, opts?: Record<string, unknown>): Promise<Buffer>;
   /** Record the page as a screencast (stream of frames). save(dir) writes numbered images. */
   recordScreencast(opts?: { format?: 'jpeg' | 'png'; quality?: number; everyNthFrame?: number; maxWidth?: number; maxHeight?: number }):
     Promise<{ frames: Array<{ data: string; metadata: any }>; save(dir: string): string[]; stop(): Promise<void> }>;

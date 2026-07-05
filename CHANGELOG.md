@@ -2,6 +2,25 @@
 
 All notable changes to `orca-playwright-bridge`. Verified against the Orca release noted per entry.
 
+## [1.5.1] — Orca v1.4.123
+
+### Two upstream limitations fixed by Orca — re-verified live against 1.4.123
+- **`page.pdf()` / `Page.printToPDF` now works** ([stablyai/orca#7032](https://github.com/stablyai/orca/issues/7032)). The proxy answered `Page.printToPDF` on 1.4.123 where it was absent on ≤ 1.4.120 ("the one gap"). Verified end-to-end: raw CDP returns valid `%PDF-` bytes, and Playwright's `page.pdf()` tunnels through the bridge cleanly.
+  - **Added `orca.pdf(path?, opts?)`** to the raw-CDP driver (`connectOrca()`) — wraps `Page.printToPDF` (`printBackground` on by default; opts pass straight to CDP). Types in `connect.d.ts`; new capability test in `test/raw-cdp.test.js`.
+- **Profile storage isolation now works** ([stablyai/orca#6923](https://github.com/stablyai/orca/issues/6923)). `tab profile create --scope isolated` now gives a tab its own storage, not just a partition string — an isolated-profile tab no longer sees the default profile's localStorage/cookies. `repro/profile-isolation.js` (once a bug reproducer) now **PASSES** and serves as a regression guard.
+
+### Still holds on 1.4.123 (re-probed)
+- `context.newCDPSession()` still blocked — `Target.attachToBrowserTarget` → `Not allowed` ([#7033](https://github.com/stablyai/orca/issues/7033)).
+- `page.fill()` still no-ops without focus — click first ([#7035](https://github.com/stablyai/orca/issues/7035)).
+- `page.reload()` remains fixed (since 1.4.120, [#7031](https://github.com/stablyai/orca/issues/7031)).
+
+### Changed
+- **Re-stamped docs 1.4.120 → 1.4.123** where re-verified: README limitations + capability list, `SKILL.md` traps table (dropped the now-fixed pdf/profile-isolation rows), `cdp-availability.md` (flipped `Page.printToPDF` to ✅, probe date 2026-07-05), `emulation.md`, `capture.md`, `debugging.md`, `storage-and-cookies.md`.
+- **`window.open()` popups are activation-gated on 1.4.123.** A page-spawned popup only opens when the page holds transient user activation / foreground focus — under pure automation that activation often isn't present, so the handler fires but no tab opens (an Orca-side popup behavior, not a bridge defect). The `waitForNewTab()` capability test now **skips gracefully** when Orca declines to spawn the popup, and still asserts detection correctness when one does open. Documented in `multi-tab-and-popups.md`. `waitForNewTab()` itself is unchanged.
+
+### Test run (live, Orca 1.4.123)
+- Full browser suite: **all pass**, plus the popup test which self-skips when the activation-gated popup doesn't open. Mobile tests skip (no simulator/emulator booted). Mobile, `Tracing`, and dialog reference docs retain their 1.4.120 stamp — not re-run this pass (no device booted).
+
 ## [1.5.0] — Orca v1.4.120
 
 ### Changed — one package, two surfaces (skill reorganization)

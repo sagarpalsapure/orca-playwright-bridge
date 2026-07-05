@@ -53,7 +53,7 @@ const { ruleUsage } = await orca.client.send('CSS.stopRuleUsageTracking', {});
 
 ## The escape hatch: `orca.client.send()`
 
-Anything the proxy answers is one call away — `await orca.client.send('Domain.method', params)` — and events via `orca.client.on('Domain.event', cb)`. See `references/browser/cdp-availability.md` for the live-probed matrix of what answers (almost everything except `Page.printToPDF`).
+Anything the proxy answers is one call away — `await orca.client.send('Domain.method', params)` — and events via `orca.client.on('Domain.event', cb)`. See `references/browser/cdp-availability.md` for the live-probed matrix of what answers (as of Orca 1.4.123, effectively everything the driver needs — `Page.printToPDF` was the last gap and is now fixed).
 
 Verified-available extras worth knowing:
 

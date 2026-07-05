@@ -42,7 +42,7 @@ t.setCredentials('user', 'pass');                // HTTP basic auth
 
 ## Beyond the wrapped API — verified raw domains
 
-These `Emulation.*` methods were probed against the live proxy (Orca 1.4.120) and all answer; use `orca.client.send()` directly:
+These `Emulation.*` methods were probed against the live proxy (re-verified on Orca 1.4.123) and all answer; use `orca.client.send()` directly:
 
 ```js
 await orca.client.send('Emulation.setGeolocationOverride', { latitude: 18.52, longitude: 73.85, accuracy: 10 });

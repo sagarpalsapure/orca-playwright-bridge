@@ -72,6 +72,8 @@ close();                           // closes the popup tab
 
 The same applies to `window.open()` and OAuth popup flows: drive the popup natively, then continue with Playwright on the opener.
 
+> ⚠️ **Activation-gating (observed on Orca 1.4.123).** `window.open()` only spawns a tab when the page holds **transient user activation / foreground focus**. Under pure automation that activation often isn't present — an automated click or a programmatic `window.open()` can fire (the handler runs) yet no tab opens, so `waitForNewTab` times out with "no new tab appeared." A real `target=_blank` link click driven by Playwright is the most reliable trigger. If a popup is essential to your flow and won't open, `orca tab create --url <the popup URL>` and drive that tab directly instead. (This is Orca-side popup behavior, not a bridge limitation.)
+
 ## Dialogs — verified behavior differs per type
 
 Orca's embedded browser does NOT treat the three JS dialogs equally (verified on 1.4.120):

@@ -1,6 +1,6 @@
 # CDP availability matrix (live-probed)
 
-Every method below was sent to Orca's CDP proxy on a throwaway tab and classified by its actual response. Probed **2026-07-03 against Orca 1.4.120**. Re-probe after an Orca upgrade if something here matters to your task.
+Every method below was sent to Orca's CDP proxy on a throwaway tab and classified by its actual response. Probed **2026-07-05 against Orca 1.4.123**. Re-probe after an Orca upgrade if something here matters to your task.
 
 **Legend:** ✅ answers correctly · ❌ method absent from the proxy.
 
@@ -12,7 +12,7 @@ Every method below was sent to Orca's CDP proxy on a throwaway tab and classifie
 | `Page.getLayoutMetrics` | ✅ | enables `fullPageScreenshot()` |
 | `Page.captureSnapshot` (MHTML) | ✅ | wrapped: `captureMHTML()` |
 | `Page.startScreencast` | ✅ | wrapped: `recordScreencast()` |
-| `Page.printToPDF` | ❌ | **the one gap** — no `page.pdf()` (stablyai/orca#7032) |
+| `Page.printToPDF` | ✅ | wrapped: `pdf()`; `page.pdf()` works too — **fixed in Orca 1.4.123** (was absent ≤ 1.4.120; stablyai/orca#7032) |
 | `Page.getNavigationHistory` | ✅ | back/forward programmatically |
 | `Page.handleJavaScriptDialog` | ✅ | but only `confirm()` ever shows a dialog — `alert()` is swallowed, `prompt()` throws (see multi-tab-and-popups.md) |
 | `Page.setDownloadBehavior` | ✅ | route downloads to a directory |

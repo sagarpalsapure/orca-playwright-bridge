@@ -20,9 +20,13 @@ const orca = await connectOrca();
 await orca.fullPageScreenshot('page.png');             // stitches via Page.getLayoutMetrics
 ```
 
-## PDF — NOT available
+## PDF
 
-`Page.printToPDF` is absent from the proxy (verified on 1.4.120; stablyai/orca#7032). `page.pdf()` will fail. Substitutes:
+```js
+await orca.pdf('page.pdf');                            // Page.printToPDF; opts (landscape, scale, margin*) pass to CDP
+```
+
+`Page.printToPDF` was absent from the proxy on Orca ≤ 1.4.120 (stablyai/orca#7032) but is **fixed in 1.4.123** — both `orca.pdf()` and Playwright's `page.pdf()` return real PDF bytes now. On older Orca, fall back to:
 
 - `fullPageScreenshot()` — visual record.
 - `captureMHTML()` — faithful single-file archive (below).

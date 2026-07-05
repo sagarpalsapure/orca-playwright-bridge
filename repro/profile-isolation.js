@@ -1,15 +1,16 @@
 'use strict';
 /*
- * Reproducer: Orca browser profiles do NOT isolate web storage.
+ * Regression guard: Orca browser profiles isolate web storage.
  *
- * The docs say profiles "isolate tab session state ... different cookies, local
- * storage, and logged-in identities" (https://www.onorca.dev/docs/cli/overview),
- * and `tab profile create --scope isolated` even assigns a distinct partition
- * string. But a default-profile tab and an isolated-profile tab on the same
- * origin still read each other's localStorage AND cookies.
+ * Once a reproducer for stablyai/orca#6923 — on Orca ≤ 1.4.120 a default-profile
+ * tab and an isolated-profile tab on the same origin read each other's
+ * localStorage AND cookies, despite `tab profile create --scope isolated`
+ * assigning a distinct partition string. **Fixed in Orca 1.4.123**: isolated
+ * profiles now get their own storage. This script now guards against a
+ * regression — it should PASS on current Orca.
  *
  * Depends only on the `orca` CLI (no extra packages). Run:  node repro/profile-isolation.js
- * Exit code: 0 if storage is isolated (bug fixed), 1 if it leaks (bug present).
+ * Exit code: 0 if storage is isolated (expected on 1.4.123+), 1 if it leaks (regression / old Orca).
  */
 
 const { execFileSync } = require('node:child_process');

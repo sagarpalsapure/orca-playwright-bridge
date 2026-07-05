@@ -60,14 +60,11 @@ await orca.evaluate(`(() => { const s = ${JSON.stringify(s.local)}; for (const k
 await orca.goto(url);   // reload so the app picks the state up
 ```
 
-## TRAP: no storage isolation between profiles
+## Profile isolation (fixed in Orca 1.4.123)
 
-Orca profiles (`orca tab profile create --scope isolated`) get their own partition string, but **localStorage and cookies are still shared across profiles** (upstream bug, stablyai/orca#6923, still present in 1.4.120). Do NOT rely on profiles for:
+Orca profiles (`orca tab profile create --scope isolated`) get their own partition string **and** their own storage. localStorage and cookies are now isolated per profile — a tab on an isolated profile no longer sees the default profile's keys or cookies (stablyai/orca#6923, **fixed in 1.4.123**; verified by `node repro/profile-isolation.js` → PASS).
 
-- Testing two accounts "side by side" — they will leak into each other.
-- Keeping automation state out of the user's real session.
-
-If two clean states are required, the only honest answer is: log out/switch in-page, or serialize (run one state, save+clear, run the other).
+On **older Orca (≤ 1.4.120)** storage was still shared across profiles — the flag assigned a partition but leaked state. If you're stuck on an older build, don't rely on profile isolation: log out/switch in-page, or serialize (run one state, save+clear, run the other).
 
 ## Quota / usage
 

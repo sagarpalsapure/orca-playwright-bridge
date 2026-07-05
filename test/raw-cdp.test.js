@@ -82,6 +82,16 @@ test('audits + capture: metrics(), axTree(), captureMHTML(), fullPageScreenshot(
   } finally { await o.close(); tab.close(); }
 });
 
+test('pdf() prints the page to a real PDF (Orca 1.4.123+; stablyai/orca#7032)', { skip: SKIP }, async () => {
+  const tab = await openRawTab('data:text/html,<title>pdf</title><h1>PDF probe</h1><p>1.4.123</p>');
+  const o = await connectOrca({ cdpUrl: tab.cdpUrl });
+  try {
+    const buf = await o.pdf();
+    assert.ok(buf.length > 1000, 'should return PDF bytes');
+    assert.equal(buf.slice(0, 5).toString('latin1'), '%PDF-', 'should carry the PDF magic header');
+  } finally { await o.close(); tab.close(); }
+});
+
 test('fullPageScreenshot() caps huge pages instead of returning empty', { skip: SKIP }, async () => {
   // 20000px tall — beyond Chrome's 16384 limit, where captureScreenshot returns
   // empty data unless the clip is capped.
