@@ -2,6 +2,11 @@
 
 All notable changes to `orca-playwright-bridge`. Verified against the Orca release noted per entry.
 
+## [1.5.2] — Orca v1.4.123
+
+### Fixed
+- **`/orca` command pointed at a skill that no longer exists.** The command template told the agent to "lean on the `orca-browser` skill" — but that skill was renamed to **`orca-automation`** in 1.5.0. Both references in `commands/orca.md` corrected so the shipped command resolves to the right skill. (Docs-only; no code/API changes.)
+
 ## [1.5.1] — Orca v1.4.123
 
 ### Two upstream limitations fixed by Orca — re-verified live against 1.4.123

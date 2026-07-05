@@ -1,0 +1,5 @@
+{
+  "enabledPlugins": {
+    "orca-playwright-bridge@orca-playwright-bridge": true
+  }
+}

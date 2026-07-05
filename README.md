@@ -51,7 +51,7 @@ Prefer to read before you run? Inspect [`get.sh`](get.sh) first, or use one of t
 
 ## Install
 
-**Current release: [`v1.5.1`](https://github.com/sagarpalsapure/orca-playwright-bridge/releases/tag/v1.5.1)** (on npm as [`orca-playwright-bridge@1.5.1`](https://www.npmjs.com/package/orca-playwright-bridge), verified against Orca 1.4.123). The commands below always fetch the latest.
+**Current release: [`v1.5.2`](https://github.com/sagarpalsapure/orca-playwright-bridge/releases/tag/v1.5.2)** (on npm as [`orca-playwright-bridge@1.5.2`](https://www.npmjs.com/package/orca-playwright-bridge), verified against Orca 1.4.123). The commands below always fetch the latest.
 
 **Pick your path** (all require the Orca app running + Node ≥ 18):
 
