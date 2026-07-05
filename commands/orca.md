@@ -6,7 +6,7 @@ allowed-tools: Bash, Read
 
 Drive my **Orca** app's browser to: **$ARGUMENTS**
 
-Use `orca-playwright-bridge`. Quick path (the `orca-browser` skill has the full playbook + gotchas):
+Use `orca-playwright-bridge`. Quick path (the `orca-automation` skill has the full playbook + gotchas):
 
 ```js
 const { openOrcaTab } = require('orca-playwright-bridge');   // or: ~/.local/lib/orca-pw-bridge.js
@@ -21,4 +21,4 @@ try {
 2. Do the task; report each result pass/fail with the actual value + the screenshot path.
 3. If you drove my live tab, restore its URL when done.
 
-Gotchas: `click` before `fill`; popups → `waitForNewTab`; iframes read-only via `frameLocator` (`page.reload()` closed the tab on Orca < 1.4.120 — use `t.reload()` there). For the rest, lean on the `orca-browser` skill.
+Gotchas: `click` before `fill`; popups → `waitForNewTab`; iframes read-only via `frameLocator` (`page.reload()` closed the tab on Orca < 1.4.120 — use `t.reload()` there). For the rest, lean on the `orca-automation` skill.
