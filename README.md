@@ -1,5 +1,7 @@
 # orca-playwright-bridge
 
+[![npm version](https://img.shields.io/npm/v/orca-playwright-bridge)](https://www.npmjs.com/package/orca-playwright-bridge) [![verified against Orca](https://img.shields.io/badge/verified%20against-Orca%201.4.123-blue)](CHANGELOG.md)
+
 Drive the **[Orca](https://github.com/stablyai/orca)** app's embedded Chromium browser with **Playwright** — or raw CDP — from any script.
 
 > **Heads up — `npm i orca-playwright-bridge` installs the *library only*** (for `require()` in your own code). It does **not** put the `orca-cdp` CLI on your PATH or install the `/orca` Claude Code command. For the **full setup**, run **`npx orca-playwright-bridge setup`** (see [Quickstart](#quickstart)).
@@ -48,6 +50,8 @@ Prefer to read before you run? Inspect [`get.sh`](get.sh) first, or use one of t
 - macOS or Linux. (`orca-cdp` matches the process named `Orca`; on Linux adjust if your binary differs.)
 
 ## Install
+
+**Current release: [`v1.5.1`](https://github.com/sagarpalsapure/orca-playwright-bridge/releases/tag/v1.5.1)** (on npm as [`orca-playwright-bridge@1.5.1`](https://www.npmjs.com/package/orca-playwright-bridge), verified against Orca 1.4.123). The commands below always fetch the latest.
 
 **Pick your path** (all require the Orca app running + Node ≥ 18):
 
