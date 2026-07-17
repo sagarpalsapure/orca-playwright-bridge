@@ -21,7 +21,7 @@ const path = require('node:path');
 
 const {
   openOrcaTab, attachOrcaTab, orcaTabs, discoverAllCdpEndpoints,
-  orcaVersion, versionGte,
+  orcaVersion, versionGte, resolveEndpointForPageId,
 } = require('..');
 const { connectOrca } = require('../lib/orca-connect.js');
 
@@ -100,6 +100,25 @@ test('reattach() re-establishes a live connection to the same tab', { skip: SKIP
     if (revived) await revived.close();           // revived owns the tab (close closes it)
     else { try { await t.close(); } catch (_) { /* best effort */ } }
   }
+});
+
+// --- attach auto-activate ----------------------------------------------------
+// The true idle-reclaim wake path (Orca drops a dormant tab's debug port, attach
+// re-focuses to revive it) can't be forced deterministically in a unit test —
+// it's validated manually. Here we cover the surrounding contract: the fast path
+// (endpoint already live → no focus steal) and the { activate:false } opt-out.
+
+test('attachOrcaTab attaches to a background tab (fast path — endpoint already live)', { skip: SKIP }, async () => {
+  const bg = await openOrcaTab('data:text/html,<title>BGATTACH</title>', { focus: false });
+  const pageId = bg.browserPageId;
+  try {
+    // resolveEndpointForPageId should find the live endpoint without activating.
+    const ep = await resolveEndpointForPageId(pageId, { activate: false });
+    assert.ok(ep && ep.cdpUrl, 'a freshly-created background tab still exposes its endpoint');
+    const conn = await attachOrcaTab(pageId, { activate: false });
+    try { assert.equal(await conn.page.title(), 'BGATTACH'); }
+    finally { await conn.close(); }
+  } finally { await bg.close(); }
 });
 
 // --- HAR response bodies -----------------------------------------------------

@@ -173,6 +173,16 @@ export interface ConnectPlaywrightOptions extends StartBridgeOptions {
   connectOptions?: Record<string, unknown>;
 }
 
+export interface AttachOptions extends ConnectPlaywrightOptions {
+  /**
+   * When the target tab is idle/backgrounded and exposes no live CDP endpoint
+   * (Orca reclaims dormant tabs' debug ports), focus it to wake the renderer and
+   * wait for the port before attaching. Default true. Set false to get a clear
+   * error instead of stealing focus.
+   */
+  activate?: boolean;
+}
+
 export function startBridge(opts?: StartBridgeOptions): Promise<Bridge>;
 export function connectOrcaPlaywright(opts?: ConnectPlaywrightOptions): Promise<OrcaPlaywright>;
 /**
@@ -192,9 +202,17 @@ export function openOrcaTab(
  * active, so a second session can't steal the first session's tab. close()
  * detaches the bridge but leaves the tab open.
  */
-export function attachOrcaTab(pageId: string, opts?: ConnectPlaywrightOptions): Promise<OrcaPlaywright>;
-/** Resolve the CDP endpoint serving the tab with the given browserPageId (or null). */
+export function attachOrcaTab(pageId: string, opts?: AttachOptions): Promise<OrcaPlaywright>;
+/** Resolve the CDP endpoint serving the tab with the given browserPageId (searches all worktrees; null if the tab exists but exposes no endpoint). */
 export function findEndpointForPageId(pageId: string, preferNotIn?: Set<number>): Promise<CdpEndpoint | null>;
+/**
+ * Resolve the endpoint for a tab, waking it if idle: if the tab is listed but has
+ * no live endpoint and `activate !== false`, focus it and wait for its CDP port.
+ */
+export function resolveEndpointForPageId(
+  pageId: string,
+  opts?: { preferNotIn?: Set<number>; activate?: boolean; timeoutMs?: number }
+): Promise<CdpEndpoint>;
 /**
  * Run an action that opens a new tab/window and return a driver for it.
  * Popups have no CDP endpoint (Playwright can't attach), so `tab` is the native
