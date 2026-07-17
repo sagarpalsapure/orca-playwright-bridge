@@ -2,6 +2,27 @@
 
 All notable changes to `orca-playwright-bridge`. Verified against the Orca release noted per entry.
 
+## [1.6.0] — Orca v1.4.144
+
+Re-verify against Orca 1.4.144 (was 1.4.123) plus a batch of smoothness enhancements. The three upstream fixes this project tracks (`page.reload()`, `page.pdf()`, profile isolation) all remain fixed on 1.4.144.
+
+### Added
+- **`openOrcaTab(url, { isolated })`** — opens the tab in a fresh isolated browser profile (its own cookies/localStorage; isolation fixed upstream in 1.4.123, [#6923](https://github.com/stablyai/orca/issues/6923)) and **deletes that profile on `close()`**. Pass a string to name it, or `{ profile: '<id>' }` to reuse an existing profile. `conn.profileId` reports the profile in use.
+- **`conn.reattach()`** on `openOrcaTab()`/`attachOrcaTab()` connections — the one-call remedy for the "one client per tab" trap: `conn = await conn.reattach()` frees the dead bridge/browser and returns a fresh connection pinned to the same tab.
+- **`orcaVersion()` / `versionGte(a, b)`** exports — best-effort Orca app version (override with `ORCA_VERSION`) and a dotted-version comparator. `connectOrcaPlaywright().reload()` is now **version-aware**: native `page.reload()` on Orca ≥ 1.4.120, re-navigate fallback on older builds.
+- **`recordNetwork({ bodies: true })`** — captures response bodies (`Network.getResponseBody`) into HAR `content.text` for a fully replayable archive. Off by default (adds a round-trip per request).
+- **`recordScreencast().toVideo(path)` / `.toGif(path)`** — encode captured frames to MP4/GIF via `ffmpeg` (clear error if ffmpeg is absent; `save(dir)` unchanged).
+- **`npx orca-playwright-bridge doctor`** — preflight health check: Orca reachable, detected Orca version, tab open, deps (`ws`/`playwright`/`chrome-remote-interface`) and tooling (`lsof`, optional `ffmpeg`) resolvable.
+- **`orcaTabs({ worktree })` + tab fields** — `orcaTabs()` and `orcaTabList()` accept a worktree selector (or `'all'`), and `orcaTabs().list` now surfaces `profileId`, `profileLabel`, and `worktreeId`.
+
+### Changed
+- **CDP discovery no longer shells out to `curl`.** `discoverAllCdpEndpoints()` (and `orca-connect.js`'s `scanForCdp()`) now probe candidate ports with Node's core `http`, **concurrently** (`Promise.all`) — no `curl` dependency (portable to minimal containers) and a faster connect. `bin/orca-cdp` (a shell tool) still uses curl by design.
+- **Faster tab open/switch** — fixed `sleep()` polling replaced with exponential backoff (fast when ready, patient when not).
+- **BREAKING (low-level helpers only):** the discovery helpers are now **async** — `discoverAllCdpEndpoints()`, `discoverCdpUrl()`, `findCdpUrlForTab()`, `findEndpointForPageId()` (main entry) and `discoverCdpUrl()`/`scanForCdp()` (`./connect`) return Promises. The headline API (`connectOrcaPlaywright`, `openOrcaTab`, `attachOrcaTab`, `orcaTabs`, `startBridge`, `connectOrca`) is unchanged. Type defs updated in `index.d.ts` / `connect.d.ts`.
+
+### Test run (live, Orca 1.4.144)
+- Full suite **45 tests: 40 pass, 0 fail, 5 skipped** (popup activation-gating + no simulator/emulator booted), clean process exit. New `test/enhancements.test.js` locks in isolated profiles, `reattach()`, HAR bodies, screencast→GIF, and the version helpers.
+
 ## [1.5.2] — Orca v1.4.123
 
 ### Fixed

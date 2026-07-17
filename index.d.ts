@@ -19,10 +19,22 @@ export interface OrcaPlaywright {
   /** The live Orca tab as a Playwright page (null if none resolved). */
   page: Page | null;
   bridge: Bridge;
-  /** Present on openOrcaTab() results — the Orca browserPageId of the new tab. */
+  /** Present on openOrcaTab()/attachOrcaTab() results — the Orca browserPageId of the tab. */
   browserPageId?: string;
-  /** Reload safely (re-navigates the current URL; page.reload() would close the tab). */
+  /** Present on openOrcaTab() results — the browser profile the tab runs in. */
+  profileId?: string;
+  /**
+   * Reload safely. On Orca >= 1.4.120 uses native page.reload(); otherwise
+   * re-navigates the current URL (older Orca's page.reload() closed the tab).
+   */
   reload(opts?: { waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit' }): Promise<unknown>;
+  /**
+   * Rebuild a fresh connection to the SAME tab — the remedy for the "one client
+   * per tab" trap (attaching another client kills the current one). Returns a
+   * new connection; use it in place of the dead one. Present on
+   * openOrcaTab()/attachOrcaTab() results.
+   */
+  reattach?(): Promise<OrcaPlaywright>;
   /** Detach Playwright + stop the bridge (openOrcaTab also closes the tab). */
   close(): Promise<void>;
 }
@@ -48,6 +60,11 @@ export interface TabListItem {
   pageId: string;
   url: string;
   active: boolean;
+  /** The browser session profile the tab runs in (Orca 1.4.123+). */
+  profileId?: string;
+  profileLabel?: string;
+  /** The Orca worktree that owns the tab. */
+  worktreeId?: string;
 }
 
 export interface Snapshot {
@@ -137,6 +154,11 @@ export interface OrcaTabs {
   evalAll(js: string): Promise<Array<{ pageId: string; url: string; value: any }>>;
 }
 
+export interface OrcaTabsOptions {
+  /** Scope to a worktree selector (or 'all'); defaults to the current worktree. */
+  worktree?: string;
+}
+
 export interface StartBridgeOptions {
   /** Attach to the open tab whose URL matches (each tab has its own endpoint). */
   tab?: RegExp | string;
@@ -153,7 +175,17 @@ export interface ConnectPlaywrightOptions extends StartBridgeOptions {
 
 export function startBridge(opts?: StartBridgeOptions): Promise<Bridge>;
 export function connectOrcaPlaywright(opts?: ConnectPlaywrightOptions): Promise<OrcaPlaywright>;
-export function openOrcaTab(url: string, opts?: { profile?: string; focus?: boolean }): Promise<OrcaPlaywright>;
+/**
+ * Open a new Orca tab and attach Playwright.
+ * @param opts.profile   open the tab in this existing profile id.
+ * @param opts.isolated  open in a fresh isolated profile (own storage; deleted on
+ *   close). A string value names the profile. Overrides `profile`.
+ * @param opts.focus     (default true) foreground the tab; false = background.
+ */
+export function openOrcaTab(
+  url: string,
+  opts?: { profile?: string; isolated?: boolean | string; focus?: boolean; connectOptions?: Record<string, unknown> }
+): Promise<OrcaPlaywright>;
 /**
  * Re-attach Playwright to a tab you already own, by its browserPageId — the
  * multi-session-safe reconnect. Pins to the exact tab regardless of which is
@@ -162,7 +194,7 @@ export function openOrcaTab(url: string, opts?: { profile?: string; focus?: bool
  */
 export function attachOrcaTab(pageId: string, opts?: ConnectPlaywrightOptions): Promise<OrcaPlaywright>;
 /** Resolve the CDP endpoint serving the tab with the given browserPageId (or null). */
-export function findEndpointForPageId(pageId: string, preferNotIn?: Set<number>): CdpEndpoint | null;
+export function findEndpointForPageId(pageId: string, preferNotIn?: Set<number>): Promise<CdpEndpoint | null>;
 /**
  * Run an action that opens a new tab/window and return a driver for it.
  * Popups have no CDP endpoint (Playwright can't attach), so `tab` is the native
@@ -173,9 +205,13 @@ export function waitForNewTab(
   opts?: { timeout?: number }
 ): Promise<{ pageId: string; url: string; tab: TabDriver; close(): void }>;
 export function loadChromium(): BrowserType;
-export function discoverCdpUrl(): string;
-export function discoverAllCdpEndpoints(): CdpEndpoint[];
-export function findCdpUrlForTab(match: RegExp | string): string;
-export function orcaTabs(): OrcaTabs;
-export function orcaTabList(): OrcaTabInfo[];
+export function discoverCdpUrl(): Promise<string>;
+export function discoverAllCdpEndpoints(): Promise<CdpEndpoint[]>;
+export function findCdpUrlForTab(match: RegExp | string): Promise<string>;
+export function orcaTabs(opts?: OrcaTabsOptions): OrcaTabs;
+export function orcaTabList(worktree?: string): OrcaTabInfo[];
 export function switchToOrcaTab(match: RegExp | string): Promise<OrcaTabInfo>;
+/** Best-effort Orca app version (e.g. "1.4.144"), or null. Set ORCA_VERSION to override. */
+export function orcaVersion(): string | null;
+/** Compare dotted version strings: versionGte('1.4.144','1.4.120') === true. */
+export function versionGte(a: string, b: string): boolean;

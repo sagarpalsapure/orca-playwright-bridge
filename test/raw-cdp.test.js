@@ -23,11 +23,11 @@ const SKIP = orcaReachable() ? false : 'Orca not running/reachable — open Orca
 
 /** Open a tab and resolve the CDP endpoint it spawned (so connectOrca targets it exactly). */
 async function openRawTab(url) {
-  const before = new Set(discoverAllCdpEndpoints().map((e) => e.port));
+  const before = new Set((await discoverAllCdpEndpoints()).map((e) => e.port));
   const out = execFileSync('orca', ['tab', 'create', '--url', url, '--json'], { stdio: ['ignore', 'pipe', 'ignore'] }).toString();
   const pageId = JSON.parse(out).result.browserPageId;
   let ep = null;
-  for (let i = 0; i < 40 && !ep; i++) { await sleep(300); ep = discoverAllCdpEndpoints().find((e) => !before.has(e.port)); }
+  for (let i = 0; i < 40 && !ep; i++) { await sleep(300); ep = (await discoverAllCdpEndpoints()).find((e) => !before.has(e.port)); }
   assert.ok(ep, 'new tab never exposed a CDP endpoint');
   return { pageId, cdpUrl: ep.cdpUrl, close() { try { execFileSync('orca', ['tab', 'close', '--page', pageId, '--json'], { stdio: 'ignore' }); } catch (_) {} } };
 }

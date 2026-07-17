@@ -20,7 +20,7 @@ It is unofficial/reverse-engineered on the browser side; the traps below are ver
 | A **native iOS/Android app** on a simulator/emulator | `references/mobile/devices-and-setup.md` → `references/mobile/flows.md` |
 | Interactive agent-driven mobile tapping (no JS) | `references/mobile/maestro-mcp.md` |
 
-Precondition for everything: Orca is running — `orca status --json` → `result.runtime.reachable === true`. If not, stop and tell the user to open Orca.
+Precondition for everything: Orca is running — `orca status --json` → `result.runtime.reachable === true`. If not, stop and tell the user to open Orca. (Diagnosing a failing setup? `npx orca-playwright-bridge doctor` checks Orca + version + deps + tooling in one shot.)
 
 ---
 
@@ -42,9 +42,9 @@ const { connectOrca } = require('orca-playwright-bridge/connect');
 
 ## Recipes
 
-**Drive a page with Playwright** (openOrcaTab focuses the new tab so the user can watch):
+**Drive a page with Playwright** (openOrcaTab focuses the new tab so the user can watch). Pass `{ isolated: true }` for a fresh isolated profile — own cookies/localStorage, auto-deleted on `close()` (Orca 1.4.123+):
 ```js
-const t = await openOrcaTab('https://example.com');
+const t = await openOrcaTab('https://example.com');   // or openOrcaTab(url, { isolated: true })
 try {
   await t.page.click('#email'); await t.page.fill('#email', 'a@b.co');   // click THEN fill (see traps)
   await t.page.getByRole('button', { name: 'Sign in' }).click();
@@ -67,7 +67,9 @@ await orca.emulate({ device: 'iPhone 12', timezone: 'Asia/Tokyo' });   // instan
 await orca.fullPageScreenshot('page.png');
 await orca.pdf('page.pdf');                                     // Page.printToPDF (Orca 1.4.123+)
 const blk = await orca.blockRequests(['.css', /analytics/]);   // real request blocking
-// … also: cookies(), storage(), axTree(), metrics(), captureMHTML(), recordScreencast()
+const net = await orca.recordNetwork({ bodies: true });        // .har() fills content.text
+const rec = await orca.recordScreencast(); /* … */ await rec.stop(); rec.toGif('run.gif'); // or toVideo (needs ffmpeg)
+// … also: cookies(), storage(), axTree(), metrics(), captureMHTML()
 await orca.close();
 ```
 
@@ -81,7 +83,7 @@ await orca.close();
 | `page.route().continue()/abort()` **hangs** on real requests | `connectOrca().blockRequests(patterns)`. `route.fulfill()` (pure mock) is fine |
 | `context.newCDPSession()` blocked (`Target.attachToBrowserTarget`) | raw `connectOrca()` reaches Emulation/Network/Accessibility/Performance directly |
 | iframe **interaction** / `frame.evaluate()` **hangs** | iframes are **readable** via `frameLocator()` (incl. cross-origin); for same-origin writes use `page.evaluate(() => document.querySelector('iframe').contentDocument…)` |
-| **One client per tab** — attaching raw CDP, a second bridge, or ANY native `orcaTabs()` verb silently kills the tab's current client (`Target … has been closed` / `WebSocket … closed`) | Sequence clients; while capturing (network/screencast/trace) drive via that same client (`orca.evaluate`); re-attach with `attachOrcaTab(pageId)` afterwards |
+| **One client per tab** — attaching raw CDP, a second bridge, or ANY native `orcaTabs()` verb silently kills the tab's current client (`Target … has been closed` / `WebSocket … closed`) | Sequence clients; while capturing (network/screencast/trace) drive via that same client (`orca.evaluate`); recover with `conn = await conn.reattach()` (frees the dead bridge + reconnects the same tab in one call), or `attachOrcaTab(pageId)` |
 | `alert()` is **silently swallowed** (no dialog); `prompt()` **throws** "not supported" | Only `confirm()` shows a real dialog — `acceptDialog()`/`dismissDialog()` or `page.on('dialog')` both work. For `prompt`: stub it first — `page.evaluate(() => { window.prompt = () => 'answer'; })` |
 
 ### Browser deep-dives

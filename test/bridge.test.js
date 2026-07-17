@@ -43,13 +43,13 @@ const SKIP = orcaReachable() ? false : 'Orca not running/reachable — open Orca
 
 /** Open a fresh tab to `url`; resolve its pageId + the CDP endpoint it spawned. */
 async function openTab(url) {
-  const before_ = new Set(discoverAllCdpEndpoints().map((e) => e.port));
+  const before_ = new Set((await discoverAllCdpEndpoints()).map((e) => e.port));
   const out = execFileSync('orca', ['tab', 'create', '--url', url, '--json'], { stdio: ['ignore', 'pipe', 'ignore'] }).toString();
   const pageId = JSON.parse(out).result.browserPageId;
   let ep = null;
   for (let i = 0; i < 40 && !ep; i++) {
     await sleep(300);
-    ep = discoverAllCdpEndpoints().find((e) => !before_.has(e.port));
+    ep = (await discoverAllCdpEndpoints()).find((e) => !before_.has(e.port));
   }
   assert.ok(ep, 'new tab never exposed a CDP endpoint');
   return {
@@ -148,7 +148,7 @@ test('attachOrcaTab(pageId) pins to a specific tab, not the active one', { skip:
   const tabB = await openTab(B);   // opened last → active
   try {
     // pin by the endpoint join, independent of which tab is active
-    const epA = findEndpointForPageId(tabA.pageId);
+    const epA = await findEndpointForPageId(tabA.pageId);
     assert.equal(epA.cdpUrl, tabA.cdpUrl, 'findEndpointForPageId should resolve tab A by its own pageId');
 
     const conn = await attachOrcaTab(tabA.pageId);
@@ -164,7 +164,7 @@ test('attachOrcaTab(pageId) pins to a specific tab, not the active one', { skip:
 // Belt-and-suspenders: make sure we never leave self-test tabs behind.
 after(async () => {
   if (SKIP) return;
-  for (const ep of discoverAllCdpEndpoints()) {
+  for (const ep of await discoverAllCdpEndpoints()) {
     if (typeof ep.pageUrl === 'string' && ep.pageUrl.includes(MARKER)) {
       try {
         const tabs = orcaTabs();

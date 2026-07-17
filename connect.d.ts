@@ -41,9 +41,23 @@ export interface ConsoleCapture {
 export interface NetworkRecorder {
   /** Grows as requests/responses arrive. */
   events: NetworkEvent[];
-  /** Build a HAR 1.2 log from what's been captured so far. */
+  /**
+   * Build a HAR 1.2 log from what's been captured so far. Entries carry
+   * response bodies in `content.text` when recorded with `{ bodies: true }`.
+   */
   har(): Har;
   stop(): void;
+}
+
+export interface Screencast {
+  frames: Array<{ data: string; metadata: any }>;
+  /** Write captured frames as numbered images to `dir`; returns the paths. */
+  save(dir: string): string[];
+  /** Encode frames to a video (needs ffmpeg on PATH). Returns outPath. */
+  toVideo(outPath: string, opts?: { fps?: number }): string;
+  /** Encode frames to an animated GIF (needs ffmpeg on PATH). Returns outPath. */
+  toGif(outPath: string, opts?: { fps?: number }): string;
+  stop(): Promise<void>;
 }
 
 export type ThrottlePreset =
@@ -73,7 +87,8 @@ export interface OrcaCdp {
   screenshot(path?: string, opts?: { format?: 'png' | 'jpeg' }): Promise<Buffer>;
 
   captureConsole(): ConsoleCapture;
-  recordNetwork(): Promise<NetworkRecorder>;
+  /** @param opts.bodies also capture response bodies into HAR content.text (default false). */
+  recordNetwork(opts?: { bodies?: boolean }): Promise<NetworkRecorder>;
   throttle(preset?: ThrottlePreset): Promise<any>;
   offline(on?: boolean): Promise<any>;
   /** Block requests matching any pattern via CDP Fetch (works for real requests, unlike Playwright route.continue/abort). */
@@ -98,9 +113,9 @@ export interface OrcaCdp {
   captureMHTML(path?: string): Promise<string>;
   /** Print to PDF via Page.printToPDF (works on Orca 1.4.123+; stablyai/orca#7032). Opts pass to CDP. */
   pdf(path?: string, opts?: Record<string, unknown>): Promise<Buffer>;
-  /** Record the page as a screencast (stream of frames). save(dir) writes numbered images. */
+  /** Record the page as a screencast (stream of frames). save(dir) writes numbered images; toVideo/toGif need ffmpeg. */
   recordScreencast(opts?: { format?: 'jpeg' | 'png'; quality?: number; everyNthFrame?: number; maxWidth?: number; maxHeight?: number }):
-    Promise<{ frames: Array<{ data: string; metadata: any }>; save(dir: string): string[]; stop(): Promise<void> }>;
+    Promise<Screencast>;
   axTree(): Promise<any[]>;
   domCounters(): Promise<any>;
   metrics(): Promise<Record<string, number>>;
@@ -116,6 +131,6 @@ export interface ConnectOrcaOptions {
 }
 
 export function connectOrca(opts?: ConnectOrcaOptions): Promise<OrcaCdp>;
-export function discoverCdpUrl(): string;
-export function scanForCdp(): string | null;
+export function discoverCdpUrl(): Promise<string>;
+export function scanForCdp(): Promise<string | null>;
 export function loadCRI(): any;

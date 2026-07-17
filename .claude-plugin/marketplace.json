@@ -8,7 +8,7 @@
     {
       "name": "orca-playwright-bridge",
       "source": "./",
-      "version": "1.5.2",
+      "version": "1.6.0",
       "description": "Automate everything Orca surfaces — its embedded browser (Playwright + raw CDP) and native mobile apps on the iOS Simulator / Android emulator (Maestro). The orca-automation skill plus the /orca command.",
       "keywords": [
         "orca",
